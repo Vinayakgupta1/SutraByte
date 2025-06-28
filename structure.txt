@@ -1,0 +1,12 @@
+venv/
+requirements.txt
+static/
+  style.css
+  sutra-byte-logo1.png
+  sutra-byte-logo2.png
+templates/
+  index.html
+  about.html
+  resources.html
+  blog.html
+app.py

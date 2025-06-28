@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="user-details">
+    <div class="page-header">
+        <h1>User Details</h1>
+        <div class="header-actions">
+            <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-edit">Edit User</a>
+            <button onclick="deleteUser({{ user.id }})" class="btn btn-delete">Delete User</button>
+        </div>
+    </div>
+
+    <!-- User Information -->
+    <section class="info-section">
+        <h2>Basic Information</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Username:</label>
+                <span>{{ user.username }}</span>
+            </div>
+            <div class="info-item">
+                <label>Role:</label>
+                <span>{{ user.role }}</span>
+            </div>
+            <div class="info-item">
+                <label>Experience:</label>
+                <span>{{ user.experience }} years</span>
+            </div>
+            <div class="info-item">
+                <label>Registered:</label>
+                <span>{{ user.registered_on.strftime('%Y-%m-%d') }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Skills -->
+    <section class="skills-section">
+        <h2>Skills Profile</h2>
+        <div class="skills-grid">
+            {% for user_skill in user_skills %}
+            <div class="skill-card">
+                <h3>{{ user_skill.skill.name }}</h3>
+                <div class="skill-details">
+                    <div class="proficiency">
+                        <label>Proficiency:</label>
+                        <div class="proficiency-bar">
+                            <div class="proficiency-level" style="width: {{ user_skill.proficiency * 20 }}%"></div>
+                        </div>
+                        <span>{{ user_skill.proficiency }}/5</span>
+                    </div>
+                    <div class="skill-category">
+                        <label>Category:</label>
+                        <span>{{ user_skill.skill.category }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Skill Progression -->
+    <section class="progression-section">
+        <h2>Skill Progression</h2>
+        <div class="progression-timeline">
+            {% for progression in skill_progressions %}
+            <div class="progression-item">
+                <div class="progression-date">
+                    {{ progression.date_recorded.strftime('%Y-%m-%d') }}
+                </div>
+                <div class="progression-content">
+                    <h3>{{ progression.skill.name }}</h3>
+                    <p>Proficiency: {{ progression.proficiency }}/5</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Certifications -->
+    <section class="certifications-section">
+        <h2>Certifications</h2>
+        <div class="certifications-grid">
+            {% for user_cert in user_certifications %}
+            <div class="certification-card">
+                <h3>{{ user_cert.certification.name }}</h3>
+                <div class="cert-details">
+                    <div class="cert-info">
+                        <label>Provider:</label>
+                        <span>{{ user_cert.certification.provider }}</span>
+                    </div>
+                    <div class="cert-info">
+                        <label>Level:</label>
+                        <span>{{ user_cert.certification.level }}</span>
+                    </div>
+                    <div class="cert-info">
+                        <label>Obtained:</label>
+                        <span>{{ user_cert.date_obtained.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    <div class="cert-info">
+                        <label>Expires:</label>
+                        <span>{{ user_cert.expiry_date.strftime('%Y-%m-%d') if user_cert.expiry_date else 'Never' }}</span>
+                    </div>
+                </div>
+                <div class="cert-skills">
+                    <label>Skills Covered:</label>
+                    <div class="skill-tags">
+                        {% for cert_skill in user_cert.certification.certification_skills %}
+                        <span class="skill-tag">{{ cert_skill.skill.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<script>
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        fetch(`/admin/users/${userId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                window.location.href = '/admin';
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.user-details {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.info-section,
+.skills-section,
+.progression-section,
+.certifications-section {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: var(--grey);
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.skill-card {
+    background: var(--light);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.skill-details {
+    margin-top: 1rem;
+}
+
+.proficiency {
+    margin-bottom: 1rem;
+}
+
+.proficiency-bar {
+    background: var(--grey);
+    height: 8px;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+}
+
+.proficiency-level {
+    background: var(--primary);
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progression-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.progression-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--grey);
+}
+
+.progression-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.progression-item::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--white);
+}
+
+.progression-date {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.progression-content {
+    background: var(--light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.notes {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: var(--grey);
+}
+
+.certifications-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.certification-card {
+    background: var(--light);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.cert-details {
+    margin: 1rem 0;
+}
+
+.cert-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.cert-info label {
+    font-weight: 600;
+    color: var(--grey);
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.skill-tag {
+    background: var(--primary);
+    color: var(--white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-edit {
+    background: var(--secondary);
+    color: var(--white);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: var(--white);
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="add-skill">
+    <div class="page-header">
+        <h1>Add New Skill</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-back">Back to Dashboard</a>
+    </div>
+
+    <form method="POST" class="skill-form">
+        <!-- Basic Information -->
+        <section class="form-section">
+            <h2>Basic Information</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Skill Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="Network Security">Network Security</option>
+                        <option value="Application Security">Application Security</option>
+                        <option value="Cloud Security">Cloud Security</option>
+                        <option value="Security Operations">Security Operations</option>
+                        <option value="Governance & Compliance">Governance & Compliance</option>
+                        <option value="Cryptography">Cryptography</option>
+                        <option value="Forensics">Forensics</option>
+                        <option value="Threat Intelligence">Threat Intelligence</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Industry Trends -->
+        <section class="form-section">
+            <h2>Industry Trends</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="demand_level">Demand Level (1-5)</label>
+                    <select id="demand_level" name="demand_level" required>
+                        <option value="1">Low (1)</option>
+                        <option value="2">Below Average (2)</option>
+                        <option value="3">Average (3)</option>
+                        <option value="4">Above Average (4)</option>
+                        <option value="5">High (5)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="trend_direction">Trend Direction</label>
+                    <select id="trend_direction" name="trend_direction" required>
+                        <option value="increasing">Increasing</option>
+                        <option value="stable">Stable</option>
+                        <option value="decreasing">Decreasing</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Salary Impact -->
+        <section class="form-section">
+            <h2>Salary Impact</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="impact_percentage">Impact on Salary (%)</label>
+                    <input type="number" id="impact_percentage" name="impact_percentage" min="0" max="100" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="min_salary">Minimum Salary</label>
+                    <input type="number" id="min_salary" name="min_salary" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="max_salary">Maximum Salary</label>
+                    <input type="number" id="max_salary" name="max_salary" min="0" required>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-save">Add Skill</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.add-skill {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.form-section {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--grey);
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.5rem;
+    border: 1px solid var(--grey);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-back {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn-save {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-cancel {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+</style>
+{% endblock %} 

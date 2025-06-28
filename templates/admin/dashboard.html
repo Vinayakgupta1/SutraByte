@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1>Admin Dashboard</h1>
+    
+    <!-- Security Status Section -->
+    <section class="admin-section security-section">
+        <div class="section-header">
+            <h2>🔒 Security Status</h2>
+            <div class="section-actions">
+                <a href="{{ url_for('admin_security_status') }}" class="btn btn-security">View Security Status</a>
+            </div>
+        </div>
+        <div class="security-overview">
+            <p>Monitor and manage security configuration for the application.</p>
+            <div class="security-quick-stats">
+                <span class="security-stat">🔐 Admin Access</span>
+                <span class="security-stat">🛡️ Session Security</span>
+                <span class="security-stat">🔑 Credential Management</span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p class="stat-number">{{ total_users }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Skills</h3>
+            <p class="stat-number">{{ total_skills }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Jobs</h3>
+            <p class="stat-number">{{ total_jobs }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Courses</h3>
+            <p class="stat-number">{{ total_courses }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Resources</h3>
+            <p class="stat-number">{{ total_resources }}</p>
+        </div>
+    </div>
+
+    <!-- Users Section -->
+    <section class="admin-section">
+        <div class="section-header">
+            <h2>User Management</h2>
+            <div class="section-actions">
+                <input type="text" id="userSearch" placeholder="Search users..." class="search-input">
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Experience</th>
+                        <th>Skills</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ user.experience }} years</td>
+                        <td>{{ user.user_skills|length }}</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin_user_details', user_id=user.id) }}" class="btn btn-view">View</a>
+                            <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-edit">Edit</a>
+                            <button onclick="deleteUser({{ user.id }})" class="btn btn-delete">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="admin-section">
+        <div class="section-header">
+            <h2>Skill Management</h2>
+            <div class="section-actions">
+                <input type="text" id="skillSearch" placeholder="Search skills..." class="search-input">
+                <a href="{{ url_for('admin_add_skill') }}" class="btn btn-add">Add Skill</a>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Demand Level</th>
+                        <th>Trend</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for skill in skills %}
+                    <tr>
+                        <td>{{ skill.name }}</td>
+                        <td>{{ skill.category }}</td>
+                        <td>{{ skill.industry_trend.demand_level if skill.industry_trend else 'N/A' }}</td>
+                        <td>{{ skill.industry_trend.trend_direction if skill.industry_trend else 'N/A' }}</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin_edit_skill', skill_id=skill.id) }}" class="btn btn-edit">Edit</a>
+                            <button onclick="deleteSkill({{ skill.id }})" class="btn btn-delete">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Certifications Section -->
+    <section class="admin-section">
+        <div class="section-header">
+            <h2>Certification Management</h2>
+            <div class="section-actions">
+                <input type="text" id="certSearch" placeholder="Search certifications..." class="search-input">
+                <a href="{{ url_for('admin_add_certification') }}" class="btn btn-add">Add Certification</a>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Provider</th>
+                        <th>Level</th>
+                        <th>Validity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cert in certifications %}
+                    <tr>
+                        <td>{{ cert.name }}</td>
+                        <td>{{ cert.provider }}</td>
+                        <td>{{ cert.level }}</td>
+                        <td>{{ cert.validity_period }} months</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin_edit_certification', cert_id=cert.id) }}" class="btn btn-edit">Edit</a>
+                            <button onclick="deleteCertification({{ cert.id }})" class="btn btn-delete">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Courses Section -->
+    <section class="admin-section">
+        <div class="section-header">
+            <h2>Course Management</h2>
+            <div class="section-actions">
+                <input type="text" id="courseSearch" placeholder="Search courses..." class="search-input">
+                <a href="{{ url_for('admin_add_course') }}" class="btn btn-add">Add Course</a>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Provider</th>
+                        <th>Level</th>
+                        <th>Duration</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>{{ course.title }}</td>
+                        <td>{{ course.provider }}</td>
+                        <td>{{ course.level }}</td>
+                        <td>{{ course.duration }}</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('admin_edit_course', course_id=course.id) }}" class="btn btn-edit">Edit</a>
+                            <button onclick="deleteCourse({{ course.id }})" class="btn btn-delete">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Resources Section -->
+    <section class="admin-section">
+        <div class="section-header">
+            <h2>Resource Management</h2>
+            <div class="section-actions">
+                <input type="text" id="resourceSearch" placeholder="Search resources..." class="search-input">
+                <div class="resource-actions">
+                    <a href="{{ url_for('admin_add_resource') }}" class="btn btn-add">Add Resource</a>
+                    <a href="{{ url_for('populate_resources') }}" class="btn btn-secondary">Populate Sample</a>
+                </div>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Subsection</th>
+                        <th>Difficulty</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resource in resources %}
+                    <tr>
+                        <td>{{ resource.title }}</td>
+                        <td><span class="badge badge-{{ resource.category }}">{{ resource.category|title }}</span></td>
+                        <td>{{ resource.subsection|title }}</td>
+                        <td><span class="badge badge-{{ resource.difficulty }}">{{ resource.difficulty|title }}</span></td>
+                        <td>{{ resource.duration }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'active' if resource.is_active else 'inactive' }}">
+                                {{ 'Active' if resource.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn btn-view">View</a>
+                            <a href="{{ url_for('admin_edit_resource', resource_id=resource.id) }}" class="btn btn-edit">Edit</a>
+                            <button onclick="deleteResource({{ resource.id }})" class="btn btn-delete">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('userSearch').addEventListener('input', function(e) {
+    filterTable('userSearch', 0);
+});
+
+document.getElementById('skillSearch').addEventListener('input', function(e) {
+    filterTable('skillSearch', 0);
+});
+
+document.getElementById('certSearch').addEventListener('input', function(e) {
+    filterTable('certSearch', 0);
+});
+
+document.getElementById('courseSearch').addEventListener('input', function(e) {
+    filterTable('courseSearch', 0);
+});
+
+document.getElementById('resourceSearch').addEventListener('input', function(e) {
+    filterTable('resourceSearch', 0);
+});
+
+function filterTable(inputId, columnIndex) {
+    const input = document.getElementById(inputId);
+    const filter = input.value.toLowerCase();
+    const table = input.closest('.admin-section').querySelector('table');
+    const rows = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < rows.length; i++) {
+        const cell = rows[i].getElementsByTagName('td')[columnIndex];
+        if (cell) {
+            const text = cell.textContent || cell.innerText;
+            rows[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+        }
+    }
+}
+
+// Delete functionality
+function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        fetch(`/admin/users/${userId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteSkill(skillId) {
+    if (confirm('Are you sure you want to delete this skill?')) {
+        fetch(`/admin/skills/${skillId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteCertification(certId) {
+    if (confirm('Are you sure you want to delete this certification?')) {
+        fetch(`/admin/certifications/${certId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteCourse(courseId) {
+    if (confirm('Are you sure you want to delete this course?')) {
+        fetch(`/admin/courses/${courseId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function deleteResource(resourceId) {
+    if (confirm('Are you sure you want to delete this resource?')) {
+        fetch(`/admin/resources/${resourceId}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.admin-dashboard {
+    padding: 2rem;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 0.5rem 0;
+}
+
+.admin-section {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.search-input {
+    padding: 0.5rem;
+    border: 1px solid var(--grey);
+    border-radius: 4px;
+    width: 200px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--grey);
+}
+
+.admin-table th {
+    background: var(--light);
+    font-weight: 600;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-view {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-edit {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-delete {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-add {
+    background: var(--success);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--grey);
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.8;
+    text-decoration: none;
+    color: white;
+}
+
+/* Badge styles */
+.badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-basic {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge-advanced {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.badge-quiz {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.badge-challenge {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.badge-beginner {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.badge-intermediate {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.badge-advanced {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.badge-active {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.badge-inactive {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+/* Resource actions */
+.resource-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Security section styles */
+.security-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.security-section h2 {
+    color: white;
+    margin: 0;
+}
+
+.security-overview {
+    margin-top: 1rem;
+}
+
+.security-overview p {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.security-quick-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.security-stat {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+.btn-security {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.btn-security:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .section-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .security-quick-stats {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %} 

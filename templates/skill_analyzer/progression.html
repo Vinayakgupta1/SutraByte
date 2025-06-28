@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Skill Progression: {{ skill.name }}</h1>
+    
+    <div class="progression-container">
+        <!-- Current Status -->
+        <section class="current-status">
+            <h2>Current Status</h2>
+            <div class="status-card">
+                <div class="proficiency-level">
+                    <h3>Current Proficiency</h3>
+                    <div class="level-display">
+                        {% set current_level = progression_history[-1].proficiency if progression_history else 0 %}
+                        {% for i in range(5) %}
+                            <span class="star {% if i < current_level %}filled{% endif %}">★</span>
+                        {% endfor %}
+                    </div>
+                    <div class="level-text">Level {{ current_level }}/5</div>
+                </div>
+                
+                <div class="skill-details">
+                    <p><strong>Category:</strong> {{ skill.category }}</p>
+                    <p><strong>Last Updated:</strong> {{ progression_history[-1].date_recorded.strftime('%Y-%m-%d') if progression_history else 'Never' }}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progression History -->
+        <section class="progression-history">
+            <h2>Progression History</h2>
+            {% if progression_history %}
+                <div class="timeline">
+                    {% for record in progression_history|reverse %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            {{ record.date_recorded.strftime('%Y-%m-%d') }}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="proficiency-change">
+                                {% if loop.index0 < progression_history|length - 1 %}
+                                    {% set prev_level = progression_history[loop.index0 + 1].proficiency %}
+                                    {% set change = record.proficiency - prev_level %}
+                                    {% if change > 0 %}
+                                        <span class="improvement">+{{ change }}</span>
+                                    {% elif change < 0 %}
+                                        <span class="decline">{{ change }}</span>
+                                    {% else %}
+                                        <span class="unchanged">No change</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="level-display">
+                                {% for i in range(5) %}
+                                    <span class="star {% if i < record.proficiency %}filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-history">No progression history available.</p>
+            {% endif %}
+        </section>
+
+        <!-- Recommendations -->
+        <section class="recommendations">
+            <h2>Next Steps</h2>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <h3>Practice Opportunities</h3>
+                    <ul>
+                        <li>Complete hands-on projects</li>
+                        <li>Participate in CTF challenges</li>
+                        <li>Join security communities</li>
+                    </ul>
+                </div>
+                
+                <div class="recommendation-card">
+                    <h3>Learning Resources</h3>
+                    <ul>
+                        <li>Online courses</li>
+                        <li>Technical documentation</li>
+                        <li>Security blogs and forums</li>
+                    </ul>
+                </div>
+                
+                <div class="recommendation-card">
+                    <h3>Certification Path</h3>
+                    <ul>
+                        <li>Entry-level certifications</li>
+                        <li>Intermediate certifications</li>
+                        <li>Advanced certifications</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1 {
+    color: var(--deep-blue);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+h2 {
+    color: var(--deep-blue);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--saffron);
+    padding-bottom: 0.5rem;
+}
+
+/* Current Status Styles */
+.status-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.proficiency-level {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.level-display {
+    font-size: 2rem;
+    color: #ddd;
+    margin: 1rem 0;
+}
+
+.level-display .star.filled {
+    color: var(--saffron);
+}
+
+.level-text {
+    font-size: 1.2rem;
+    color: var(--deep-blue);
+    font-weight: bold;
+}
+
+.skill-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Timeline Styles */
+.timeline {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--saffron);
+    transform: translateX(-50%);
+}
+
+.timeline-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.timeline-date {
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-right: 1rem;
+}
+
+.timeline-content {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 200px;
+}
+
+.proficiency-change {
+    margin-bottom: 0.5rem;
+}
+
+.improvement {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+.decline {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.unchanged {
+    color: #95a5a6;
+}
+
+/* Recommendations Styles */
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.recommendation-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.recommendation-card h3 {
+    color: var(--deep-blue);
+    margin-bottom: 1rem;
+}
+
+.recommendation-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.recommendation-card li {
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.recommendation-card li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--saffron);
+}
+
+@media (max-width: 768px) {
+    .timeline::before {
+        left: 0;
+    }
+    
+    .timeline-item {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-left: 1rem;
+    }
+    
+    .timeline-date {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %} 

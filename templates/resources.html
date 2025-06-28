@@ -1,0 +1,241 @@
+<!-- templates/resources.html for SutraByte -->
+{% extends 'base.html' %}
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+    <img src="{{ url_for('static', filename='sutra-byte-logo2.png') }}" alt="SutraByte Logo" style="height: 90px; margin-bottom: 1rem;">
+    <h1>Cybersecurity Resources</h1>
+    <div class="tagline">Your Roadmap from Novice to Ethical Hacker</div>
+    
+    <!-- Search Bar -->
+    <div class="search-container" style="margin: 2rem 0; width: 100%; max-width: 600px;">
+        <input type="text" id="resourceSearch" placeholder="Search for topics, challenges, or quizzes..." class="search-input" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 2px solid var(--saffron); font-size: 1.1rem;">
+    </div>
+</div>
+
+<!-- Weekly Quizzes Section -->
+<h2 id="weekly-quizzes">Weekly Quizzes</h2>
+<div class="card-grid">
+    {% for quiz in quizzes %}
+    <div class="card" data-category="quiz">
+        <h3>{{ quiz.title }}</h3>
+        <p>{{ quiz.description }}</p>
+        <div class="quiz-meta">
+            <span class="difficulty">Difficulty: {{ quiz.difficulty|title }}</span>
+            <span class="duration">{{ quiz.duration }}</span>
+        </div>
+        <a href="{{ url_for('resource_detail', resource_id=quiz.id) }}" class="btn">Take Quiz</a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Challenges Section -->
+<h2 id="challenges">Challenges</h2>
+<div class="card-grid">
+    {% for challenge in challenges %}
+    <div class="card" data-category="challenge">
+        <h3>{{ challenge.title }}</h3>
+        <p>{{ challenge.description }}</p>
+        <div class="challenge-meta">
+            <span class="duration">{{ challenge.duration }}</span>
+            <span class="level">{{ challenge.difficulty|title }}</span>
+        </div>
+        <a href="{{ url_for('resource_detail', resource_id=challenge.id) }}" class="btn">Start Challenge</a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Basic Resources Section -->
+<h2 id="basic">Basic Resources</h2>
+
+<!-- Fundamentals Subsection -->
+<div class="subsection">
+    <h3 class="subsection-title">🔰 Fundamentals</h3>
+    <div class="card-grid">
+        {% for resource in basic_resources if resource.subsection == 'fundamentals' %}
+        <div class="card" data-category="basic" data-subsection="fundamentals">
+            <h4>{{ resource.title }}</h4>
+            <p>{{ resource.description }}</p>
+            <div class="resource-meta">
+                <span class="difficulty">{{ resource.difficulty|title }}</span>
+                <span class="duration">{{ resource.duration }}</span>
+            </div>
+            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn">Learn More</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Safe Practices Subsection -->
+<div class="subsection">
+    <h3 class="subsection-title">🛡️ Safe Practices</h3>
+    <div class="card-grid">
+        {% for resource in basic_resources if resource.subsection == 'practices' %}
+        <div class="card" data-category="basic" data-subsection="practices">
+            <h4>{{ resource.title }}</h4>
+            <p>{{ resource.description }}</p>
+            <div class="resource-meta">
+                <span class="difficulty">{{ resource.difficulty|title }}</span>
+                <span class="duration">{{ resource.duration }}</span>
+            </div>
+            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn">Learn More</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Security Tools Subsection -->
+<div class="subsection">
+    <h3 class="subsection-title">🛠️ Security Tools</h3>
+    <div class="card-grid">
+        {% for resource in basic_resources if resource.subsection == 'tools' %}
+        <div class="card" data-category="basic" data-subsection="tools">
+            <h4>{{ resource.title }}</h4>
+            <p>{{ resource.description }}</p>
+            <div class="resource-meta">
+                <span class="difficulty">{{ resource.difficulty|title }}</span>
+                <span class="duration">{{ resource.duration }}</span>
+            </div>
+            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn">Learn More</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Advanced Resources Section -->
+<h2 id="courses" style="margin-top:2.5rem;">Advanced Resources</h2>
+
+<!-- Networking Subsection -->
+<div class="subsection">
+    <h3 class="subsection-title">🌐 Networking</h3>
+    <div class="card-grid">
+        {% for resource in advanced_resources if resource.subsection == 'networking' %}
+        <div class="card" data-category="advanced" data-subsection="networking">
+            <h4>{{ resource.title }}</h4>
+            <p>{{ resource.description }}</p>
+            <div class="resource-meta">
+                <span class="difficulty">{{ resource.difficulty|title }}</span>
+                <span class="duration">{{ resource.duration }}</span>
+            </div>
+            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn">Learn More</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Web Security Subsection -->
+<div class="subsection">
+    <h3 class="subsection-title">🔒 Web Security</h3>
+    <div class="card-grid">
+        {% for resource in advanced_resources if resource.subsection == 'web-security' %}
+        <div class="card" data-category="advanced" data-subsection="web-security">
+            <h4>{{ resource.title }}</h4>
+            <p>{{ resource.description }}</p>
+            <div class="resource-meta">
+                <span class="difficulty">{{ resource.difficulty|title }}</span>
+                <span class="duration">{{ resource.duration }}</span>
+            </div>
+            <a href="{{ url_for('resource_detail', resource_id=resource.id) }}" class="btn">Learn More</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.search-container {
+    position: relative;
+    margin: 2rem auto;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 2px solid var(--saffron);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 133, 0, 0.2);
+}
+
+.subsection {
+    margin: 2rem 0;
+}
+
+.subsection-title {
+    color: var(--saffron);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--saffron);
+    padding-bottom: 0.5rem;
+}
+
+.quiz-meta, .challenge-meta, .resource-meta {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.difficulty, .questions, .duration, .level {
+    background: #f5f5f5;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.card .btn {
+    margin-top: auto;
+}
+
+.card h4 {
+    color: var(--saffron);
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .subsection-title {
+        font-size: 1.3rem;
+    }
+}
+</style>
+
+<script>
+document.getElementById('resourceSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+    
+    cards.forEach(card => {
+        const title = card.querySelector('h3, h4').textContent.toLowerCase();
+        const description = card.querySelector('p').textContent.toLowerCase();
+        const isVisible = title.includes(searchTerm) || description.includes(searchTerm);
+        card.style.display = isVisible ? 'flex' : 'none';
+    });
+    
+    // Show/hide subsections based on visible cards
+    const subsections = document.querySelectorAll('.subsection');
+    subsections.forEach(subsection => {
+        const visibleCards = subsection.querySelectorAll('.card[style*="flex"]').length;
+        subsection.style.display = visibleCards > 0 ? 'block' : 'none';
+    });
+});
+</script>
+{% endblock %} 

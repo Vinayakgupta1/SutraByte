@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Skill Analyzer</h2>
+                </div>
+                <div class="card-body">
+                    <h4>Welcome to the Skill Analyzer!</h4>
+                    <p class="lead">This tool will help you:</p>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">✓ Analyze your current cybersecurity skills</li>
+                        <li class="list-group-item">✓ Get personalized job recommendations</li>
+                        <li class="list-group-item">✓ Identify skill gaps</li>
+                        <li class="list-group-item">✓ Find relevant courses to improve your skills</li>
+                    </ul>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('skill_profile') }}" class="btn btn-primary btn-lg">
+                            Start Skill Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

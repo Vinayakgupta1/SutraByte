@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Your Skill Analysis & Recommendations</h1>
+    
+    <!-- Industry Trends Section -->
+    <section class="industry-trends">
+        <h2>Industry Trends</h2>
+        <div class="trends-grid">
+            {% for trend in industry_trends %}
+            <div class="trend-card">
+                <h3>{{ trend.skill }}</h3>
+                <div class="trend-details">
+                    <div class="demand-level">
+                        <span class="label">Demand Level:</span>
+                        <div class="stars">
+                            {% for i in range(trend.demand_level) %}★{% endfor %}
+                            {% for i in range(5 - trend.demand_level) %}☆{% endfor %}
+                        </div>
+                    </div>
+                    <div class="trend-direction">
+                        <span class="label">Trend:</span>
+                        <span class="direction {{ trend.trend_direction }}">
+                            {{ trend.trend_direction|title }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Salary Impact Section -->
+    <section class="salary-impact">
+        <h2>Salary Impact Analysis</h2>
+        <div class="impact-summary">
+            <div class="total-impact">
+                <h3>Total Salary Impact</h3>
+                <div class="impact-value">+{{ "%.1f"|format(salary_impact) }}%</div>
+            </div>
+        </div>
+        <div class="skill-impacts">
+            {% for impact in skill_impacts %}
+            <div class="impact-card">
+                <h4>{{ impact.skill }}</h4>
+                <div class="impact-details">
+                    <p>Impact: +{{ "%.1f"|format(impact.impact) }}%</p>
+                    <p>Salary Range: ${{ "%.0f"|format(impact.min_salary) }} - ${{ "%.0f"|format(impact.max_salary) }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Skill Category Analysis -->
+    <section class="skill-categories">
+        <h2>Skill Category Analysis</h2>
+        <div class="category-grid">
+            {% for category, stats in categories.items() %}
+            <div class="category-card {% if category in weak_categories %}weak-category{% endif %}">
+                <h3>{{ category }}</h3>
+                <div class="stats">
+                    <p>Skills Coverage: {{ "%.1f"|format(stats.coverage) }}%</p>
+                    <p>Average Proficiency: {{ "%.1f"|format(stats.avg_proficiency) }}/5</p>
+                    <p>Skills: {{ stats.user_skills }}/{{ stats.total_skills }}</p>
+                </div>
+                {% if category in weak_categories %}
+                <div class="weak-category-warning">
+                    <p>⚠️ This category needs improvement</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Job Matches -->
+    <section class="job-matches">
+        <h2>Matching Job Opportunities</h2>
+        {% if matching_jobs %}
+            {% for match in matching_jobs %}
+            <div class="job-card">
+                <div class="job-header">
+                    <h3>{{ match.job.title }}</h3>
+                    <div class="match-score">
+                        Match Score: {{ "%.1f"|format(match.match_score) }}%
+                    </div>
+                </div>
+                <p class="job-description">{{ match.job.description }}</p>
+                <div class="job-details">
+                    <p><strong>Salary Range:</strong> {{ match.job.salary_range }}</p>
+                    <p><strong>Experience Required:</strong> {{ match.job.experience_required }} years</p>
+                </div>
+                
+                <div class="skills-section">
+                    <div class="matching-skills">
+                        <h4>Your Matching Skills:</h4>
+                        <ul>
+                            {% for skill in match.matching_skills %}
+                            <li class="skill-match">✓ {{ skill }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="missing-skills">
+                        <h4>Skills to Develop:</h4>
+                        <ul>
+                            {% for skill in match.missing_skills %}
+                            <li class="skill-gap">⚠️ {{ skill }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No matching jobs found. Consider adding more skills to your profile.</p>
+        {% endif %}
+    </section>
+
+    <!-- Recommended Certifications -->
+    <section class="certifications">
+        <h2>Recommended Certifications</h2>
+        {% if recommended_certs %}
+            <div class="cert-grid">
+                {% for cert in recommended_certs %}
+                <div class="cert-card">
+                    <h3>{{ cert.certification.name }}</h3>
+                    <p class="cert-provider">By {{ cert.certification.provider }}</p>
+                    <p class="cert-description">{{ cert.certification.description }}</p>
+                    <div class="cert-details">
+                        <span class="cert-level">Level: {{ cert.certification.level }}</span>
+                        <span class="cert-validity">Valid for: {{ cert.certification.validity_period }} months</span>
+                    </div>
+                    <div class="missing-skills">
+                        <h4>Skills You'll Gain:</h4>
+                        <ul>
+                            {% for skill in cert.missing_skills %}
+                            <li>📚 {{ skill }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <a href="{{ cert.certification.url }}" class="btn" target="_blank">Learn More</a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No certification recommendations available at this time.</p>
+        {% endif %}
+    </section>
+
+    <!-- Course Recommendations -->
+    <section class="course-recommendations">
+        <h2>Recommended Courses</h2>
+        {% if recommended_courses %}
+            <div class="course-grid">
+                {% for course in recommended_courses %}
+                <div class="course-card">
+                    <h3>{{ course.title }}</h3>
+                    <p class="course-provider">By {{ course.provider }}</p>
+                    <p class="course-description">{{ course.description }}</p>
+                    <div class="course-details">
+                        <span class="course-level">Level: {{ course.level }}</span>
+                        <span class="course-duration">Duration: {{ course.duration }}</span>
+                    </div>
+                    <a href="{{ course.url }}" class="btn" target="_blank">View Course</a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No course recommendations available at this time.</p>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+section {
+    margin-bottom: 3rem;
+}
+
+h1 {
+    color: var(--deep-blue);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+h2 {
+    color: var(--deep-blue);
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--saffron);
+    padding-bottom: 0.5rem;
+}
+
+/* Industry Trends Styles */
+.trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.trend-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.demand-level .stars {
+    color: var(--saffron);
+    font-size: 1.2rem;
+}
+
+.trend-direction .direction {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.trend-direction .increasing {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.trend-direction .stable {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.trend-direction .decreasing {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* Salary Impact Styles */
+.impact-summary {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.total-impact .impact-value {
+    font-size: 2.5rem;
+    color: var(--saffron);
+    font-weight: bold;
+}
+
+.skill-impacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.impact-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Category Analysis Styles */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.category-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.weak-category {
+    border: 2px solid #ff6b6b;
+}
+
+.weak-category-warning {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: #fff3f3;
+    border-radius: 4px;
+    color: #ff6b6b;
+}
+
+/* Job Card Styles */
+.job-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.match-score {
+    background: var(--saffron);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.skills-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.skill-match {
+    color: #2ecc71;
+}
+
+.skill-gap {
+    color: #e74c3c;
+}
+
+/* Certification Styles */
+.cert-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.cert-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.cert-provider {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.cert-details {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    color: #666;
+}
+
+/* Course Card Styles */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.course-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.course-provider {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.course-details {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    color: #666;
+}
+
+.btn {
+    display: inline-block;
+    background: var(--saffron);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #e67e00;
+}
+
+@media (max-width: 768px) {
+    .skills-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .job-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .match-score {
+        margin-top: 1rem;
+    }
+}
+</style>
+{% endblock %} 

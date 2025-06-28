@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SutraByte - Threading Wisdom into Cybersecurity</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='sutra-byte-logo1.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="/" class="logo">
+                <img src="{{ url_for('static', filename='sutra-byte-logo1.png') }}" alt="SutraByte Logo" height="60">
+                <span>SutraByte</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="/resources">Resources</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="{{ url_for('skill_analyzer') }}">Skill Analyzer</a></li>
+                    {% if current_user.role == 'admin' %}
+                        <li><a href="/admin">Admin</a></li>
+                    {% endif %}
+                    <li><span style="color:var(--saffron);font-weight:600;">{{ current_user.username }} ({{ current_user.role }})</span></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul style="max-width:600px;margin:1rem auto 0 auto;list-style:none;padding:0;">
+              {% for message in messages %}
+                <li style="background:#ffe0b2;color:#b26a00;padding:0.7rem 1rem;margin-bottom:0.5rem;border-radius:6px;">{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <div>
+            <img src="{{ url_for('static', filename='sutra-byte-logo2.png') }}" alt="SutraByte Watermark Logo" height="48">
+            <p>&copy; 2025 SutraByte. Threading Wisdom into Cybersecurity.</p>
+        </div>
+    </footer>
+</body>
+</html> 

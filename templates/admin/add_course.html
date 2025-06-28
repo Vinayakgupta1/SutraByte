@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="add-course">
+    <div class="page-header">
+        <h1>Add New Course</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-back">Back to Dashboard</a>
+    </div>
+
+    <form method="POST" class="course-form">
+        <!-- Basic Information -->
+        <section class="form-section">
+            <h2>Basic Information</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">Course Title</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="provider">Provider</label>
+                    <input type="text" id="provider" name="provider" required>
+                </div>
+                <div class="form-group">
+                    <label for="level">Level</label>
+                    <select id="level" name="level" required>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="duration">Duration</label>
+                    <input type="text" id="duration" name="duration" placeholder="e.g., 4 weeks, 40 hours" required>
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div class="form-group full-width">
+                <label for="url">Course URL</label>
+                <input type="url" id="url" name="url" required>
+            </div>
+        </section>
+
+        <!-- Skills Covered -->
+        <section class="form-section">
+            <h2>Skills Covered</h2>
+            <div class="skills-container">
+                {% for skill in skills %}
+                <div class="skill-item">
+                    <label>
+                        <input type="checkbox" name="skills" value="{{ skill.id }}">
+                        <span class="skill-name">{{ skill.name }}</span>
+                        <span class="skill-category">{{ skill.category }}</span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-save">Add Course</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.add-course {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.form-section {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--grey);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.5rem;
+    border: 1px solid var(--grey);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.skills-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.skill-item {
+    background: var(--light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.skill-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.skill-name {
+    flex: 1;
+}
+
+.skill-category {
+    font-size: 0.875rem;
+    color: var(--grey);
+    padding: 0.25rem 0.75rem;
+    background: var(--white);
+    border-radius: 20px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-back {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn-save {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-cancel {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+</style>
+{% endblock %} 

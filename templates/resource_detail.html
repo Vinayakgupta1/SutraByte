@@ -1,0 +1,571 @@
+<!-- templates/resource_detail.html for SutraByte -->
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="resource-detail-container">
+    <!-- Back Button -->
+    <div class="back-button">
+        <a href="{{ url_for('resources') }}" class="btn-back">
+            ← Back to Resources
+        </a>
+    </div>
+
+    <!-- Resource Header -->
+    <div class="resource-header">
+        <div class="resource-meta">
+            <span class="category-badge {{ resource.category }}">{{ resource.category|title }}</span>
+            <span class="subsection-badge">{{ resource.subsection|title }}</span>
+            <span class="difficulty-badge {{ resource.difficulty }}">{{ resource.difficulty|title }}</span>
+            <span class="duration-badge">{{ resource.duration }}</span>
+        </div>
+        <h1>{{ resource.title }}</h1>
+        <p class="resource-description">{{ resource.description }}</p>
+    </div>
+
+    <!-- Resource Content -->
+    <div class="resource-content">
+        {% if resource.category == 'quiz' %}
+            <form id="quiz-form" class="quiz-form"></form>
+            <div style="margin-top:1.5rem;">
+                <button class="btn btn-primary" onclick="checkQuizAnswers(event)">Check Answers</button>
+            </div>
+            <script>
+            // Parse quiz Markdown and render as interactive quiz
+            const quizMarkdown = `{{ resource.content|replace('`', '\`')|replace('\n', '\\n') }}`;
+            function parseQuizMarkdown(md) {
+                const questions = [];
+                const lines = md.split(/\r?\n/);
+                let q = null;
+                lines.forEach(line => {
+                    if (line.match(/^#+\s*\d+\./)) {
+                        if (q) questions.push(q);
+                        q = { question: line.replace(/^#+\s*\d+\.\s*/, ''), options: [], answer: null };
+                    } else if (/^[A-D]\)/.test(line)) {
+                        q.options.push(line.replace(/^([A-D])\)\s*/, '$1|'));
+                    } else if (/^\*\*Answer:\*\*\s*([A-D])/.test(line)) {
+                        q.answer = line.match(/^\*\*Answer:\*\*\s*([A-D])/)[1];
+                    }
+                });
+                if (q) questions.push(q);
+                return questions;
+            }
+            function renderQuiz() {
+                const questions = parseQuizMarkdown(quizMarkdown);
+                const form = document.getElementById('quiz-form');
+                form.innerHTML = '';
+                questions.forEach((q, i) => {
+                    const qDiv = document.createElement('div');
+                    qDiv.className = 'quiz-question';
+                    qDiv.innerHTML = `<div class='quiz-q-title'><b>Q${i+1}:</b> ${q.question}</div>`;
+                    q.options.forEach(opt => {
+                        const [letter, text] = opt.split('|');
+                        const optId = `q${i}_opt${letter}`;
+                        qDiv.innerHTML += `<label class='quiz-option'><input type='radio' name='q${i}' value='${letter}' id='${optId}'> ${letter}) ${text}</label><br>`;
+                    });
+                    qDiv.innerHTML += `<div class='quiz-feedback' id='feedback${i}'></div>`;
+                    form.appendChild(qDiv);
+                });
+                window.quizAnswers = questions.map(q => q.answer);
+            }
+            function checkQuizAnswers(e) {
+                e.preventDefault();
+                const answers = window.quizAnswers;
+                let correct = 0;
+                answers.forEach((ans, i) => {
+                    const selected = document.querySelector(`input[name='q${i}']:checked`);
+                    const feedback = document.getElementById('feedback'+i);
+                    if (!selected) {
+                        feedback.innerHTML = '<span style="color:#ff8500;">No answer selected.</span>';
+                        feedback.style.display = 'block';
+                        return;
+                    }
+                    if (selected.value === ans) {
+                        feedback.innerHTML = '<span style="color:green;">Correct!</span>';
+                        correct++;
+                    } else {
+                        feedback.innerHTML = `<span style='color:red;'>Incorrect. Correct answer: ${ans}</span>`;
+                    }
+                    feedback.style.display = 'block';
+                });
+                if (answers.length > 0) {
+                    alert(`You got ${correct} out of ${answers.length} correct!`);
+                }
+            }
+            renderQuiz();
+            </script>
+        {% elif resource.category == 'challenge' %}
+            <div id="hidden-content" style="display:none;">
+                <div class="content-container">
+                    <ul id="challenge-steps" class="challenge-steps"></ul>
+                </div>
+            </div>
+            <div class="quiz-actions" id="show-content-btn">
+                <button class="btn btn-primary" onclick="showResourceContent()">Start Challenge</button>
+            </div>
+            <script>
+            function showResourceContent() {
+                document.getElementById('hidden-content').style.display = 'block';
+                document.getElementById('show-content-btn').style.display = 'none';
+            }
+            // Parse challenge Markdown for steps
+            const challengeMarkdown = `{{ resource.content|replace('`', '\`')|replace('\n', '\\n') }}`;
+            function parseChallengeSteps(md) {
+                const steps = [];
+                const lines = md.split(/\r?\n/);
+                lines.forEach(line => {
+                    if (/^\s*[-*]\s+/.test(line) || /^\s*\d+\./.test(line)) {
+                        steps.push(line.replace(/^\s*[-*]\s+|^\s*\d+\.\s*/, ''));
+                    }
+                });
+                return steps;
+            }
+            function renderChallengeSteps() {
+                const steps = parseChallengeSteps(challengeMarkdown);
+                const ul = document.getElementById('challenge-steps');
+                ul.innerHTML = '';
+                steps.forEach((step, i) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<label class='challenge-step-label'><input type='checkbox'> ${step}</label>`;
+                    ul.appendChild(li);
+                });
+            }
+            renderChallengeSteps();
+            </script>
+        {% else %}
+            <div class="content-container" id="tutorial-content"></div>
+            <script>
+            // Parse tutorial/guide Markdown for collapsible sections
+            const tutorialMarkdown = `{{ resource.content|replace('`', '\`')|replace('\n', '\\n') }}`;
+            function parseTutorialSections(md) {
+                const lines = md.split(/\r?\n/);
+                const sections = [];
+                let current = null;
+                lines.forEach(line => {
+                    if (/^##+ /.test(line)) {
+                        if (current) sections.push(current);
+                        current = { heading: line.replace(/^##+ /, ''), content: '' };
+                    } else {
+                        if (current) current.content += line + '\n';
+                        else current = { heading: '', content: line + '\n' };
+                    }
+                });
+                if (current) sections.push(current);
+                return sections;
+            }
+            function renderTutorialSections() {
+                const sections = parseTutorialSections(tutorialMarkdown);
+                const container = document.getElementById('tutorial-content');
+                container.innerHTML = '';
+                sections.forEach((sec, i) => {
+                    const secDiv = document.createElement('div');
+                    secDiv.className = 'tutorial-section';
+                    secDiv.innerHTML = `<button class='collapsible' onclick='toggleSection(this)'>${sec.heading || 'Introduction'}</button><div class='section-content' style='display:none;'><pre>${sec.content}</pre></div>`;
+                    container.appendChild(secDiv);
+                });
+            }
+            function toggleSection(btn) {
+                const content = btn.nextElementSibling;
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            }
+            renderTutorialSections();
+            </script>
+        {% endif %}
+    </div>
+
+    <!-- External Link (if available) -->
+    {% if resource.external_url %}
+    <div class="external-link">
+        <h3>Additional Resources</h3>
+        <a href="{{ resource.external_url }}" target="_blank" class="btn btn-external">
+            🔗 Visit External Resource
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Related Resources -->
+    <div class="related-resources">
+        <h3>Related Resources</h3>
+        <div class="related-grid">
+            {% set related_resources = [] %}
+            {% for r in resource.query.filter_by(category=resource.category, is_active=True).limit(3).all() %}
+                {% if r.id != resource.id %}
+                    {% set _ = related_resources.append(r) %}
+                {% endif %}
+            {% endfor %}
+            
+            {% for related in related_resources %}
+            <div class="related-card">
+                <h4>{{ related.title }}</h4>
+                <p>{{ related.description[:100] }}...</p>
+                <a href="{{ url_for('resource_detail', resource_id=related.id) }}" class="btn btn-small">View</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.resource-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.back-button {
+    margin-bottom: 2rem;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--saffron);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.btn-back:hover {
+    background: #e65c00;
+    color: white;
+    text-decoration: none;
+}
+
+.resource-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.resource-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.category-badge, .subsection-badge, .difficulty-badge, .duration-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.category-badge.basic {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.category-badge.advanced {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.category-badge.quiz {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.category-badge.challenge {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.difficulty-badge.beginner {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.difficulty-badge.intermediate {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.difficulty-badge.advanced {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.duration-badge {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.resource-header h1 {
+    color: var(--saffron);
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+}
+
+.resource-description {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.resource-content {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.content-container {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.content-container h1, .content-container h2, .content-container h3 {
+    color: var(--saffron);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.content-container h1 {
+    font-size: 2rem;
+}
+
+.content-container h2 {
+    font-size: 1.5rem;
+}
+
+.content-container h3 {
+    font-size: 1.3rem;
+}
+
+.content-container p {
+    margin-bottom: 1rem;
+}
+
+.content-container ul, .content-container ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.content-container li {
+    margin-bottom: 0.5rem;
+}
+
+.content-container code {
+    background: #f5f5f5;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+.content-container pre {
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.quiz-container, .challenge-container {
+    text-align: center;
+}
+
+.quiz-actions, .challenge-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: var(--saffron);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #e65c00;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+    color: #333;
+    text-decoration: none;
+}
+
+.btn-external {
+    background: #2196f3;
+    color: white;
+}
+
+.btn-external:hover {
+    background: #1976d2;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.external-link, .related-resources {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.external-link h3, .related-resources h3 {
+    color: var(--saffron);
+    margin-bottom: 1rem;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.related-card {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--saffron);
+}
+
+.related-card h4 {
+    color: var(--saffron);
+    margin-bottom: 0.5rem;
+}
+
+.related-card p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .resource-detail-container {
+        padding: 1rem;
+    }
+    
+    .resource-header h1 {
+        font-size: 2rem;
+    }
+    
+    .resource-meta {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .quiz-actions, .challenge-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .related-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.quiz-form {
+    margin-bottom: 2rem;
+}
+.quiz-question {
+    margin-bottom: 1.5rem;
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+}
+.quiz-q-title {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+.quiz-option {
+    margin-right: 1rem;
+    font-size: 1rem;
+}
+.quiz-feedback {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    display: none;
+}
+.challenge-steps {
+    list-style: none;
+    padding-left: 0;
+}
+.challenge-step-label {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.tutorial-section {
+    margin-bottom: 1.5rem;
+}
+.collapsible {
+    background: #ff8500;
+    color: white;
+    cursor: pointer;
+    padding: 0.8rem 1.2rem;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    margin-bottom: 0.3rem;
+    transition: background 0.2s;
+}
+.collapsible:hover {
+    background: #e65c00;
+}
+.section-content {
+    background: #f9f9f9;
+    padding: 1rem;
+    border-radius: 0 0 6px 6px;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    white-space: pre-wrap;
+}
+</style>
+
+<script>
+function startQuiz() {
+    alert('Quiz functionality will be implemented in the next update!');
+}
+
+function showAnswers() {
+    alert('Answer key will be displayed here!');
+}
+
+function startChallenge() {
+    alert('Challenge tracking will be implemented in the next update!');
+}
+
+function downloadChallenge() {
+    alert('Challenge materials will be available for download!');
+}
+</script>
+
+{% endblock %} 

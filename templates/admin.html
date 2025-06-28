@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 900px; margin: 2rem auto; text-align: center;">
+    <h2>Admin Dashboard</h2>
+    <p>Welcome, {{ current_user.username }}! You have admin access.</p>
+    
+    <!-- Resource Management Section -->
+    <div style="background: #f8f9fa; padding: 2rem; border-radius: 10px; margin: 2rem 0; text-align: left;">
+        <h3 style="color: #ff8500; margin-bottom: 1rem;">Resource Management</h3>
+        <p style="margin-bottom: 1.5rem;">Create and manage cybersecurity resources for your users.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <a href="{{ url_for('admin_add_resource') }}" class="resource-btn" style="background: #28a745; color: white; padding: 1rem; text-decoration: none; border-radius: 8px; text-align: center; transition: background 0.3s;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">➕</div>
+                <strong>Add Resource</strong><br>
+                <small>Create quizzes, challenges, tutorials</small>
+            </a>
+            
+            <a href="{{ url_for('populate_resources') }}" class="resource-btn" style="background: #17a2b8; color: white; padding: 1rem; text-decoration: none; border-radius: 8px; text-align: center; transition: background 0.3s;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+                <strong>Populate Sample</strong><br>
+                <small>Add sample resources</small>
+            </a>
+            
+            <a href="{{ url_for('resources') }}" class="resource-btn" style="background: #ff8500; color: white; padding: 1rem; text-decoration: none; border-radius: 8px; text-align: center; transition: background 0.3s;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">👁️</div>
+                <strong>View Resources</strong><br>
+                <small>See all resources</small>
+            </a>
+        </div>
+        
+        <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #ff8500;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Quick Resource Types:</h4>
+            <ul style="margin: 0; padding-left: 1.5rem; color: #666;">
+                <li><strong>Basic Resources:</strong> Fundamentals, Safe Practices, Security Tools</li>
+                <li><strong>Advanced Resources:</strong> Networking, Web Security, Cryptography</li>
+                <li><strong>Quizzes:</strong> Weekly assessments, topic-specific tests</li>
+                <li><strong>Challenges:</strong> Daily tasks, hands-on exercises</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Registered Users</h3>
+    <table style="width:100%;border-collapse:collapse;margin:2rem 0;">
+        <thead>
+            <tr style="background:#f4f4f4;">
+                <th style="padding:0.7rem;border:1px solid #ddd;">Username</th>
+                <th style="padding:0.7rem;border:1px solid #ddd;">Email</th>
+                <th style="padding:0.7rem;border:1px solid #ddd;">Role</th>
+                <th style="padding:0.7rem;border:1px solid #ddd;">Registered On</th>
+                <th style="padding:0.7rem;border:1px solid #ddd;">Activity</th>
+                <th style="padding:0.7rem;border:1px solid #ddd;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td style="padding:0.7rem;border:1px solid #ddd;">{{ user.username }}</td>
+                <td style="padding:0.7rem;border:1px solid #ddd;">{{ user.email }}</td>
+                <td style="padding:0.7rem;border:1px solid #ddd;">{{ user.role }}</td>
+                <td style="padding:0.7rem;border:1px solid #ddd;">{{ user.registered_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td style="padding:0.7rem;border:1px solid #ddd;">-</td>
+                <td style="padding:0.7rem;border:1px solid #ddd;">
+                    <a href="{{ url_for('admin_user_details', user_id=user.id) }}" class="btn" style="background:#007bff;color:white;padding:0.4rem 1rem;border-radius:5px;text-decoration:none;">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+</div>
+
+<style>
+.resource-btn:hover {
+    opacity: 0.8;
+    text-decoration: none;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .resource-btn {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,40 @@
+<!-- templates/index.html for SutraByte -->
+{% extends 'base.html' %}
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+    <img src="{{ url_for('static', filename='sutra-byte-logo1.png') }}" alt="SutraByte Logo" style="height: 90px; margin-bottom: 1rem;">
+    <h1>Welcome to SutraByte</h1>
+    <div class="tagline">Threading Wisdom into Cybersecurity</div>
+    <p style="max-width: 600px; margin: 0 auto 1.5rem auto; font-size: 1.15rem;">
+        SutraByte is a free, community-driven cybersecurity learning platform where ancient discipline meets digital defense. Empower yourself with structured resources, hands-on guidance, and a roadmap from novice to skilled ethical hacker.
+    </p>
+    <a href="/resources" class="btn">Start Learning</a>
+</div>
+
+<div class="card-grid">
+    <div class="card">
+        <h3>About SutraByte</h3>
+        <p>Discover our mission, the meaning behind our name, and our founder's vision for ethical, accessible cybersecurity education.</p>
+        <a href="/about" class="btn">Learn More</a>
+    </div>
+    <div class="card">
+        <h3>Basic Resources</h3>
+        <p>Step-by-step guides, curated links, and beginner-friendly tools to kickstart your cybersecurity journey.</p>
+        <a href="/resources#basic" class="btn">Explore Basics</a>
+    </div>
+    <div class="card">
+        <h3>Courses</h3>
+        <p>Structured cybersecurity courses for all levels, from beginner to advanced, including hands-on labs and real-world scenarios.</p>
+        <a href="/resources#courses" class="btn">View Courses</a>
+    </div>
+    <div class="card">
+        <h3>Blog</h3>
+        <p>Read articles, news, and community stories to stay updated and inspired in your cybersecurity learning.</p>
+        <a href="/blog" class="btn">Read Blog</a>
+    </div>
+</div>
+
+<div style="text-align:center; margin-top:2.5rem;">
+    <a href="{{ url_for('feedback') }}" class="btn" style="background:#ff8500;color:white;">Give Feedback</a>
+</div>
+{% endblock %} 

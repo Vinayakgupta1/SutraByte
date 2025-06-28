@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="edit-certification">
+    <div class="page-header">
+        <h1>Edit Certification</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-back">Back to Dashboard</a>
+    </div>
+
+    <form method="POST" class="certification-form">
+        <!-- Basic Information -->
+        <section class="form-section">
+            <h2>Basic Information</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Certification Name</label>
+                    <input type="text" id="name" name="name" value="{{ certification.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="provider">Provider</label>
+                    <input type="text" id="provider" name="provider" value="{{ certification.provider }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="level">Level</label>
+                    <select id="level" name="level" required>
+                        <option value="Entry" {% if certification.level == 'Entry' %}selected{% endif %}>Entry Level</option>
+                        <option value="Associate" {% if certification.level == 'Associate' %}selected{% endif %}>Associate</option>
+                        <option value="Professional" {% if certification.level == 'Professional' %}selected{% endif %}>Professional</option>
+                        <option value="Expert" {% if certification.level == 'Expert' %}selected{% endif %}>Expert</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="validity_period">Validity Period (months)</label>
+                    <input type="number" id="validity_period" name="validity_period" min="0" value="{{ certification.validity_period }}" required>
+                </div>
+            </div>
+            <div class="form-group full-width">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="4" required>{{ certification.description }}</textarea>
+            </div>
+            <div class="form-group full-width">
+                <label for="url">Certification URL</label>
+                <input type="url" id="url" name="url" value="{{ certification.url }}" required>
+            </div>
+        </section>
+
+        <!-- Required Skills -->
+        <section class="form-section">
+            <h2>Required Skills</h2>
+            <div class="skills-container">
+                {% for skill in all_skills %}
+                <div class="skill-item">
+                    <div class="skill-header">
+                        <label>
+                            <input type="checkbox" name="skills" value="{{ skill.id }}"
+                                {% if skill.id in cert_skills|map(attribute='skill_id')|list %}checked{% endif %}>
+                            {{ skill.name }}
+                        </label>
+                        <span class="skill-category">{{ skill.category }}</span>
+                    </div>
+                    <div class="skill-proficiency">
+                        <label>Required Proficiency:</label>
+                        <select name="proficiency_levels" {% if skill.id not in cert_skills|map(attribute='skill_id')|list %}disabled{% endif %}>
+                            {% for i in range(1, 6) %}
+                            <option value="{{ i }}" {% if skill.id in cert_skills|map(attribute='skill_id')|list and cert_skills|selectattr('skill_id', 'equalto', skill.id)|map(attribute='proficiency_level')|first == i %}selected{% endif %}>
+                                Level {{ i }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-save">Save Changes</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.edit-certification {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.form-section {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--grey);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.5rem;
+    border: 1px solid var(--grey);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.skills-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.skill-item {
+    background: var(--light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.skill-header label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+}
+
+.skill-category {
+    font-size: 0.875rem;
+    color: var(--grey);
+    padding: 0.25rem 0.75rem;
+    background: var(--white);
+    border-radius: 20px;
+}
+
+.skill-proficiency {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.skill-proficiency label {
+    font-weight: normal;
+    color: var(--grey);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-back {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn-save {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.btn-cancel {
+    background: var(--grey);
+    color: var(--white);
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+</style>
+
+<script>
+document.querySelectorAll('input[name="skills"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const proficiencySelect = this.closest('.skill-item').querySelector('select[name="proficiency_levels"]');
+        proficiencySelect.disabled = !this.checked;
+        if (!this.checked) {
+            proficiencySelect.value = '1';
+        }
+    });
+});
+</script>
+{% endblock %} 

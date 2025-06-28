@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Your Skills Profile</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('skill_profile') }}">
+                        <div class="mb-4">
+                            <label for="experience" class="form-label">Years of Experience in Cybersecurity</label>
+                            <input type="number" class="form-control" id="experience" name="experience" 
+                                   value="{{ current_user.experience }}" min="0" required>
+                        </div>
+
+                        <h4 class="mb-3">Your Skills</h4>
+                        <div class="mb-3">
+                            <p class="text-muted">Rate your proficiency level for each skill (1-5):</p>
+                            <ul class="list-unstyled">
+                                <li>1 - Basic Knowledge</li>
+                                <li>2 - Working Knowledge</li>
+                                <li>3 - Proficient</li>
+                                <li>4 - Advanced</li>
+                                <li>5 - Expert</li>
+                            </ul>
+                        </div>
+
+                        <div class="skills-container">
+                            {% for skill in all_skills %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <h5 class="card-title">{{ skill.name }}</h5>
+                                            <p class="card-text text-muted">{{ skill.category }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="skills" value="{{ skill.name }}" 
+                                                       id="skill_{{ skill.id }}"
+                                                       {% if skill in user_skills %}checked{% endif %}>
+                                                <label class="form-check-label" for="skill_{{ skill.id }}">
+                                                    I have this skill
+                                                </label>
+                                            </div>
+                                            <select class="form-select mt-2" name="proficiencies" 
+                                                    id="proficiency_{{ skill.id }}">
+                                                <option value="1">Basic Knowledge</option>
+                                                <option value="2">Working Knowledge</option>
+                                                <option value="3">Proficient</option>
+                                                <option value="4">Advanced</option>
+                                                <option value="5">Expert</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Save Profile & Get Recommendations
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enable/disable proficiency select based on checkbox
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const proficiencySelect = this.parentElement.nextElementSibling;
+            proficiencySelect.disabled = !this.checked;
+        });
+    });
+});
+</script>
+{% endblock %} 

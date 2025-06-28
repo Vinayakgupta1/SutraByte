@@ -1,0 +1,26 @@
+<!-- templates/blog.html for SutraByte -->
+{% extends 'base.html' %}
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+    <img src="{{ url_for('static', filename='sutra-byte-logo2.png') }}" alt="SutraByte Logo" style="height: 90px; margin-bottom: 1rem;">
+    <h1>Cybersecurity Blog</h1>
+    <div class="tagline">Decode. Defend. Develop.</div>
+</div>
+<div class="card-grid">
+    <div class="card">
+        <h3>Getting Started in Cybersecurity</h3>
+        <p>Tips and resources for absolute beginners. How to build habits and avoid overwhelm.</p>
+        <a href="/blog/getting-started" class="btn">Read More</a>
+    </div>
+    <div class="card">
+        <h3>Top 5 Free Tools for Ethical Hackers</h3>
+        <p>Discover essential free tools every aspiring ethical hacker should know and use.</p>
+        <a href="/blog/top-5-tools" class="btn">Read More</a>
+    </div>
+    <div class="card">
+        <h3>How to Practice Safely</h3>
+        <p>Learn about legal and ethical hacking, safe environments, and responsible disclosure.</p>
+        <a href="/blog/practice-safely" class="btn">Read More</a>
+    </div>
+</div>
+{% endblock %} 

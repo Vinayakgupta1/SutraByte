@@ -1,0 +1,80 @@
+<!-- templates/about.html for SutraByte -->
+{% extends 'base.html' %}
+{% block content %}
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+    <img src="{{ url_for('static', filename='sutra-byte-logo1.png') }}" alt="SutraByte Logo" style="height: 90px; margin-bottom: 1rem;">
+    <h1>About SutraByte</h1>
+    <div class="tagline">Empowering the Next Generation of Cyber Defenders</div>
+</div>
+<div class="card-grid">
+    <div class="card">
+        <h3>Our Mission</h3>
+        <p>To make cybersecurity education <b>accessible, ethical, and actionable</b> for everyone—regardless of background or prior experience. We aim to build a safer digital world by equipping individuals with <b>structured, step-by-step learning paths</b>, practical resources, and <b>real-world insights</b> into ethical hacking and defense.</p>
+    </div>
+    <div class="card">
+        <h3>Our Vision</h3>
+        <p>To evolve as a leading global platform where <b>timeless wisdom meets modern cybersecurity practices</b>. SutraByte envisions a vibrant community of <b>ethical hackers, cyber defenders, and security innovators</b> who actively shape the future of digital safety.</p>
+    </div>
+    <div class="card">
+        <h3>Our Values</h3>
+        <ul style="text-align:left;">
+            <li><b>Accessibility</b>: Learning should be free, open, and inclusive for everyone—no matter their background.</li>
+            <li><b>Ethics</b>: We promote responsible, legal, and purposeful use of cybersecurity skills to protect and uplift.</li>
+            <li><b>Innovation</b>: We blend ancient principles with cutting-edge digital practices to create practical knowledge.</li>
+            <li><b>Community</b>: We grow together—learning, supporting, and mentoring each other as a global cyber tribe.</li>
+        </ul>
+    </div>
+    <div class="card">
+        <h3>Why SutraByte?</h3>
+        <p><b>Sutra (सूत्र):</b> A Sanskrit word meaning "thread," "guideline," or "formula"—symbolizing timeless wisdom and structured learning.<br>
+        <b>Byte:</b> The building block of digital information in computing.<br><br>
+        <b>SutraByte</b> weaves these two worlds together—<b>fusing ancient wisdom and modern digital intelligence</b> to build a safer, smarter cyber world.</p>
+    </div>
+    <div class="card">
+        <h3>Meet the Founder</h3>
+        <p><b>Vinayak (CyberGupta)</b><br>Penetration Tester, Ethical Hacker, and Cybersecurity Enthusiast</p>
+        <blockquote style="font-style:italic; color:#555; margin:1rem 0 0 0; border-left:4px solid #ff8500; padding-left:1rem;">"I started SutraByte to break down barriers in cybersecurity education. My mission is to inspire, guide, and empower the next generation of cyber defenders—making security a habit, not just a skill."</blockquote>
+    </div>
+</div>
+{% if social_links %}
+<div class="social-links" style="margin-top:2.5rem; text-align:center;">
+    <h3>Connect with Us</h3>
+    <div style="display:flex; justify-content:center; gap:1rem; margin-top:1rem; flex-wrap:nowrap; overflow-x:auto;">
+        {% for name, url in social_links.items() %}
+            <a href="{{ url }}" target="_blank" style="font-size:1rem; color:#333; text-decoration:none; padding:0.6rem 1rem; border-radius:8px; background:#f8f9fa; border:2px solid #e9ecef; transition:all 0.3s ease; display:flex; align-items:center; gap:0.4rem; white-space:nowrap; min-width:fit-content;">
+                <span style="font-size:1.2rem;">
+                    {% if name == 'LinkedIn' %}
+                        <i class="fab fa-linkedin" style="color: #0A66C2;"></i>
+                    {% elif name == 'Founder LinkedIn' %}
+                        <i class="fab fa-linkedin" style="color: #0A66C2;"></i>
+                    {% elif name == 'Co-Founder LinkedIn' %}
+                        <i class="fab fa-linkedin" style="color: #0A66C2;"></i>
+                    {% elif name == 'Founder Portfolio' %}
+                        <i class="fas fa-user-tie" style="color: #ff8500;"></i>
+                    {% elif name == 'Co-Founder Portfolio' %}
+                        <i class="fas fa-user-tie" style="color: #ff8500;"></i>
+                    {% elif name == 'Twitter' %}
+                        <i class="fab fa-twitter" style="color: #1DA1F2;"></i>
+                    {% elif name == 'GitHub' %}
+                        <i class="fab fa-github" style="color: #333;"></i>
+                    {% elif name == 'Instagram' %}
+                        <i class="fab fa-instagram" style="color: #E4405F;"></i>
+                    {% elif name == 'YouTube' %}
+                        <i class="fab fa-youtube" style="color: #FF0000;"></i>
+                    {% elif name == 'Facebook' %}
+                        <i class="fab fa-facebook" style="color: #1877F2;"></i>
+                    {% elif name == 'Discord' %}
+                        <i class="fab fa-discord" style="color: #5865F2;"></i>
+                    {% elif name == 'Telegram' %}
+                        <i class="fab fa-telegram" style="color: #0088CC;"></i>
+                    {% else %}
+                        <i class="fas fa-external-link-alt" style="color: #ff8500;"></i>
+                    {% endif %}
+                </span>
+                {{ name }}
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

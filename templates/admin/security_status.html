@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Security Status - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Security Status</h1>
+    
+    <div class="security-overview">
+        <h2>Configuration Overview</h2>
+        
+        <div class="status-grid">
+            <div class="status-item {% if status.environment_valid %}status-good{% else %}status-error{% endif %}">
+                <h3>Environment Configuration</h3>
+                <p>{% if status.environment_valid %}✅ Valid{% else %}❌ Invalid{% endif %}</p>
+                {% if not status.environment_valid %}
+                    <ul>
+                        {% for var in status.missing_variables %}
+                            <li>Missing: {{ var }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            
+            <div class="status-item {% if not status.debug_mode %}status-good{% else %}status-warning{% endif %}">
+                <h3>Debug Mode</h3>
+                <p>{% if status.debug_mode %}⚠️ Enabled (Security Risk){% else %}✅ Disabled{% endif %}</p>
+            </div>
+            
+            <div class="status-item {% if status.secure_cookies %}status-good{% else %}status-warning{% endif %}">
+                <h3>Secure Cookies</h3>
+                <p>{% if status.secure_cookies %}✅ Enabled{% else %}⚠️ Disabled{% endif %}</p>
+            </div>
+            
+            <div class="status-item {% if status.secret_key_set %}status-good{% else %}status-error{% endif %}">
+                <h3>Secret Key</h3>
+                <p>{% if status.secret_key_set %}✅ Configured{% else %}❌ Not Set{% endif %}</p>
+            </div>
+            
+            <div class="status-item {% if status.admin_configured %}status-good{% else %}status-warning{% endif %}">
+                <h3>Admin User</h3>
+                <p>{% if status.admin_configured %}✅ Configured{% else %}⚠️ Not Configured{% endif %}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="security-recommendations">
+        <h2>Security Recommendations</h2>
+        
+        <div class="recommendations-list">
+            {% if not status.environment_valid %}
+                <div class="recommendation critical">
+                    <h3>🔴 Critical: Set Environment Variables</h3>
+                    <p>Create a .env file with the following variables:</p>
+                    <pre>
+SECRET_KEY=your-super-secret-key-here
+ADMIN_USERNAME=your_admin_username
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=your_strong_admin_password
+ADMIN_CREATION_TOKEN=your-secure-admin-creation-token
+FLASK_DEBUG=False
+                    </pre>
+                </div>
+            {% endif %}
+            
+            {% if status.debug_mode %}
+                <div class="recommendation critical">
+                    <h3>🔴 Critical: Disable Debug Mode</h3>
+                    <p>Debug mode exposes sensitive information and should be disabled in production.</p>
+                    <p>Set FLASK_DEBUG=False in your environment variables.</p>
+                </div>
+            {% endif %}
+            
+            {% if not status.secret_key_set %}
+                <div class="recommendation critical">
+                    <h3>🔴 Critical: Set Secret Key</h3>
+                    <p>Generate a strong secret key using Python:</p>
+                    <pre>import secrets
+print(secrets.token_hex(32))</pre>
+                </div>
+            {% endif %}
+            
+            {% if not status.secure_cookies %}
+                <div class="recommendation warning">
+                    <h3>🟡 Warning: Enable Secure Cookies</h3>
+                    <p>Secure cookies should be enabled in production for better security.</p>
+                </div>
+            {% endif %}
+            
+            <div class="recommendation info">
+                <h3>ℹ️ General Security Tips</h3>
+                <ul>
+                    <li>Use HTTPS in production</li>
+                    <li>Regularly rotate admin passwords</li>
+                    <li>Monitor access logs</li>
+                    <li>Keep dependencies updated</li>
+                    <li>Use strong, unique passwords</li>
+                    <li>Consider implementing two-factor authentication</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="admin-actions">
+        <h2>Admin Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('create_admin') }}" class="btn btn-primary">Create Admin User</a>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.security-overview {
+    margin-bottom: 2rem;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.status-item {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.status-good {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.status-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.status-error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.recommendations-list {
+    margin-top: 1rem;
+}
+
+.recommendation {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.recommendation.critical {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+}
+
+.recommendation.warning {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+}
+
+.recommendation.info {
+    background-color: #d1ecf1;
+    border-left-color: #17a2b8;
+}
+
+.recommendation pre {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.admin-actions {
+    margin-top: 2rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+</style>
+{% endblock %} 
