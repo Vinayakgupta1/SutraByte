@@ -12,7 +12,28 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
+
+# Database configuration - PostgreSQL by default, SQLite fallback for local development
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    # Production: Use PostgreSQL from environment
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # Development: Try PostgreSQL first, fallback to SQLite
+    try:
+        import psycopg2
+        # Test PostgreSQL connection
+        test_conn = psycopg2.connect("postgresql://localhost/sutrabyte_dev")
+        test_conn.close()
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/sutrabyte_dev'
+        print("🔗 Using PostgreSQL for local development")
+    except (ImportError, psycopg2.OperationalError):
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
+        print("💾 PostgreSQL not available, using SQLite for local development")
+        print("💡 Install PostgreSQL for better performance: https://www.postgresql.org/download/")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Security best practice for production
@@ -193,6 +214,17 @@ class Resource(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=True)
+    message = db.Column(db.Text, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    user = db.relationship('User', backref=db.backref('feedbacks', lazy=True))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -362,15 +394,597 @@ def logout():
     flash('Logged out successfully.')
     return redirect(url_for('index'))
 
-# Example of a protected route for admins only
 @app.route('/admin')
 @login_required
-def admin():
+def admin_dashboard():
     if current_user.role != 'admin':
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('index'))
-    users = User.query.order_by(User.registered_on.desc()).all()
-    return render_template('admin.html', users=users)
+    
+    # Get statistics
+    total_users = User.query.count()
+    total_skills = Skill.query.count()
+    total_jobs = Job.query.count()
+    total_courses = Course.query.count()
+    total_resources = Resource.query.count()
+    total_feedback = Feedback.query.count()
+    unread_count = Feedback.query.filter_by(is_read=False).count()
+    
+    # Get recent feedback (last 5 entries)
+    recent_feedbacks = Feedback.query.order_by(Feedback.submitted_at.desc()).limit(5).all()
+    recent_feedback_count = len(recent_feedbacks)
+    
+    # Get all users with their skills
+    users = User.query.all()
+    
+    # Get all skills with their trends
+    skills = Skill.query.all()
+    
+    # Get all certifications
+    certifications = Certification.query.all()
+    
+    # Get all courses
+    courses = Course.query.all()
+    
+    # Get all resources
+    resources = Resource.query.order_by(Resource.category, Resource.subsection, Resource.title).all()
+    
+    return render_template('admin/dashboard.html',
+                         total_users=total_users,
+                         total_skills=total_skills,
+                         total_jobs=total_jobs,
+                         total_courses=total_courses,
+                         total_resources=total_resources,
+                         total_feedback=total_feedback,
+                         unread_count=unread_count,
+                         recent_feedback_count=recent_feedback_count,
+                         recent_feedbacks=recent_feedbacks,
+                         users=users,
+                         skills=skills,
+                         certifications=certifications,
+                         courses=courses,
+                         resources=resources)
+
+@app.route('/admin/users/<int:user_id>')
+@login_required
+def admin_user_details(user_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+    skill_progressions = SkillProgression.query.filter_by(user_id=user_id).all()
+    user_certifications = UserCertification.query.filter_by(user_id=user_id).all()
+    
+    return render_template('admin/user_details.html',
+                         user=user,
+                         user_skills=user_skills,
+                         skill_progressions=skill_progressions,
+                         user_certifications=user_certifications)
+
+@app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_user(user_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        user.username = request.form.get('username')
+        user.role = request.form.get('role')
+        user.experience = int(request.form.get('experience', 0))
+        
+        # Update user skills
+        UserSkill.query.filter_by(user_id=user_id).delete()
+        for skill_id, proficiency in request.form.items():
+            if skill_id.startswith('skill_'):
+                skill_id = int(skill_id.split('_')[1])
+                proficiency = int(proficiency)
+                user_skill = UserSkill(
+                    user_id=user_id,
+                    skill_id=skill_id,
+                    proficiency=proficiency
+                )
+                db.session.add(user_skill)
+        
+        db.session.commit()
+        flash('User updated successfully.', 'success')
+        return redirect(url_for('admin_user_details', user_id=user_id))
+    
+    all_skills = Skill.query.all()
+    return render_template('admin/edit_user.html',
+                         user=user,
+                         all_skills=all_skills)
+
+@app.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+def admin_delete_user(user_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'User deleted successfully'})
+
+@app.route('/admin/skills/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_skill():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        category = request.form.get('category')
+        demand_level = int(request.form.get('demand_level'))
+        trend_direction = request.form.get('trend_direction')
+        impact_percentage = float(request.form.get('impact_percentage'))
+        min_salary = float(request.form.get('min_salary'))
+        max_salary = float(request.form.get('max_salary'))
+        
+        skill = Skill(name=name, category=category)
+        db.session.add(skill)
+        db.session.flush()
+        
+        trend = IndustryTrend(
+            skill_id=skill.id,
+            demand_level=demand_level,
+            trend_direction=trend_direction
+        )
+        
+        impact = SalaryImpact(
+            skill_id=skill.id,
+            impact_percentage=impact_percentage,
+            min_salary=min_salary,
+            max_salary=max_salary
+        )
+        
+        db.session.add(trend)
+        db.session.add(impact)
+        db.session.commit()
+        
+        flash('Skill added successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('admin/add_skill.html')
+
+@app.route('/admin/skills/<int:skill_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_skill(skill_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    skill = Skill.query.get_or_404(skill_id)
+    trend = IndustryTrend.query.filter_by(skill_id=skill_id).first()
+    impact = SalaryImpact.query.filter_by(skill_id=skill_id).first()
+    
+    if request.method == 'POST':
+        skill.name = request.form.get('name')
+        skill.category = request.form.get('category')
+        
+        if trend:
+            trend.demand_level = int(request.form.get('demand_level'))
+            trend.trend_direction = request.form.get('trend_direction')
+        
+        if impact:
+            impact.impact_percentage = float(request.form.get('impact_percentage'))
+            impact.min_salary = float(request.form.get('min_salary'))
+            impact.max_salary = float(request.form.get('max_salary'))
+        
+        db.session.commit()
+        flash('Skill updated successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('admin/edit_skill.html',
+                         skill=skill,
+                         trend=trend,
+                         impact=impact)
+
+@app.route('/admin/skills/<int:skill_id>', methods=['DELETE'])
+@login_required
+def admin_delete_skill(skill_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    
+    skill = Skill.query.get_or_404(skill_id)
+    db.session.delete(skill)
+    db.session.commit()
+    return jsonify({'message': 'Skill deleted successfully'})
+
+@app.route('/admin/certifications/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_certification():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        provider = request.form.get('provider')
+        description = request.form.get('description')
+        level = request.form.get('level')
+        validity_period = int(request.form.get('validity_period'))
+        url = request.form.get('url')
+        
+        certification = Certification(
+            name=name,
+            provider=provider,
+            description=description,
+            level=level,
+            validity_period=validity_period,
+            url=url
+        )
+        db.session.add(certification)
+        db.session.flush()
+        
+        # Add certification skills
+        skill_ids = request.form.getlist('skills')
+        proficiency_levels = request.form.getlist('proficiency_levels')
+        
+        for skill_id, proficiency in zip(skill_ids, proficiency_levels):
+            cert_skill = CertificationSkill(
+                certification_id=certification.id,
+                skill_id=int(skill_id),
+                proficiency_level=int(proficiency)
+            )
+            db.session.add(cert_skill)
+        
+        db.session.commit()
+        flash('Certification added successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    skills = Skill.query.all()
+    return render_template('admin/add_certification.html', skills=skills)
+
+@app.route('/admin/certifications/<int:cert_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_certification(cert_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    certification = Certification.query.get_or_404(cert_id)
+    cert_skills = CertificationSkill.query.filter_by(certification_id=cert_id).all()
+    
+    if request.method == 'POST':
+        certification.name = request.form.get('name')
+        certification.provider = request.form.get('provider')
+        certification.description = request.form.get('description')
+        certification.level = request.form.get('level')
+        certification.validity_period = int(request.form.get('validity_period'))
+        certification.url = request.form.get('url')
+        
+        # Update certification skills
+        CertificationSkill.query.filter_by(certification_id=cert_id).delete()
+        
+        skill_ids = request.form.getlist('skills')
+        proficiency_levels = request.form.getlist('proficiency_levels')
+        
+        for skill_id, proficiency in zip(skill_ids, proficiency_levels):
+            cert_skill = CertificationSkill(
+                certification_id=cert_id,
+                skill_id=int(skill_id),
+                proficiency_level=int(proficiency)
+            )
+            db.session.add(cert_skill)
+        
+        db.session.commit()
+        flash('Certification updated successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    all_skills = Skill.query.all()
+    return render_template('admin/edit_certification.html',
+                         certification=certification,
+                         cert_skills=cert_skills,
+                         all_skills=all_skills)
+
+@app.route('/admin/certifications/<int:cert_id>', methods=['DELETE'])
+@login_required
+def admin_delete_certification(cert_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    
+    certification = Certification.query.get_or_404(cert_id)
+    db.session.delete(certification)
+    db.session.commit()
+    return jsonify({'message': 'Certification deleted successfully'})
+
+@app.route('/admin/courses/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_course():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        provider = request.form.get('provider')
+        description = request.form.get('description')
+        level = request.form.get('level')
+        duration = request.form.get('duration')
+        url = request.form.get('url')
+        
+        course = Course(
+            title=title,
+            provider=provider,
+            description=description,
+            level=level,
+            duration=duration,
+            url=url
+        )
+        db.session.add(course)
+        db.session.flush()
+        
+        # Add course skills
+        skill_ids = request.form.getlist('skills')
+        for skill_id in skill_ids:
+            course_skill = CourseSkill(
+                course_id=course.id,
+                skill_id=int(skill_id)
+            )
+            db.session.add(course_skill)
+        
+        db.session.commit()
+        flash('Course added successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    skills = Skill.query.all()
+    return render_template('admin/add_course.html', skills=skills)
+
+@app.route('/admin/courses/<int:course_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_course(course_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    course = Course.query.get_or_404(course_id)
+    course_skills = CourseSkill.query.filter_by(course_id=course_id).all()
+    
+    if request.method == 'POST':
+        course.title = request.form.get('title')
+        course.provider = request.form.get('provider')
+        course.description = request.form.get('description')
+        course.level = request.form.get('level')
+        course.duration = request.form.get('duration')
+        course.url = request.form.get('url')
+        
+        # Update course skills
+        CourseSkill.query.filter_by(course_id=course_id).delete()
+        
+        skill_ids = request.form.getlist('skills')
+        for skill_id in skill_ids:
+            course_skill = CourseSkill(
+                course_id=course_id,
+                skill_id=int(skill_id)
+            )
+            db.session.add(course_skill)
+        
+        db.session.commit()
+        flash('Course updated successfully.', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    all_skills = Skill.query.all()
+    return render_template('admin/edit_course.html',
+                         course=course,
+                         course_skills=course_skills,
+                         all_skills=all_skills)
+
+@app.route('/admin/courses/<int:course_id>', methods=['DELETE'])
+@login_required
+def admin_delete_course(course_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    
+    course = Course.query.get_or_404(course_id)
+    db.session.delete(course)
+    db.session.commit()
+    return jsonify({'message': 'Course deleted successfully'})
+
+@app.route('/admin/resources/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_resource():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        category = request.form['category']
+        subsection = request.form['subsection']
+        difficulty = request.form['difficulty']
+        duration = request.form['duration']
+        content = request.form['content']
+        external_url = request.form.get('external_url', '')
+        is_active = 'is_active' in request.form
+        
+        resource = Resource(
+            title=title,
+            description=description,
+            category=category,
+            subsection=subsection,
+            difficulty=difficulty,
+            duration=duration,
+            content=content,
+            external_url=external_url,
+            is_active=is_active
+        )
+        
+        db.session.add(resource)
+        db.session.commit()
+        
+        flash('Resource added successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('admin/add_resource.html')
+
+@app.route('/admin/resources/<int:resource_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_resource(resource_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    resource = Resource.query.get_or_404(resource_id)
+    
+    if request.method == 'POST':
+        resource.title = request.form['title']
+        resource.description = request.form['description']
+        resource.category = request.form['category']
+        resource.subsection = request.form['subsection']
+        resource.difficulty = request.form['difficulty']
+        resource.duration = request.form['duration']
+        resource.content = request.form['content']
+        resource.external_url = request.form.get('external_url', '')
+        resource.is_active = 'is_active' in request.form
+        
+        db.session.commit()
+        
+        flash('Resource updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+    
+    return render_template('admin/edit_resource.html', resource=resource)
+
+@app.route('/admin/resources/<int:resource_id>', methods=['DELETE'])
+@login_required
+def admin_delete_resource(resource_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    
+    resource = Resource.query.get_or_404(resource_id)
+    db.session.delete(resource)
+    db.session.commit()
+    return jsonify({'message': 'Resource deleted successfully'})
+
+@app.route('/populate-resources')
+@login_required
+def populate_resources():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        populate_initial_resources()
+        flash('Resources populated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error populating resources: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/security-status')
+@login_required
+def admin_security_status():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Import security functions
+    try:
+        from security_config import get_security_status
+        status = get_security_status()
+    except ImportError:
+        status = {
+            'environment_valid': False,
+            'missing_variables': ['security_config module not found'],
+            'debug_mode': os.environ.get('FLASK_DEBUG', 'False').lower() == 'true',
+            'secure_cookies': os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true',
+            'secret_key_set': bool(os.environ.get('SECRET_KEY')),
+            'admin_configured': bool(os.environ.get('ADMIN_USERNAME') and os.environ.get('ADMIN_PASSWORD'))
+        }
+    
+    return render_template('admin/security_status.html', status=status)
+
+@app.route('/admin/feedback')
+@login_required
+def admin_feedback():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    # Get all feedback, ordered by most recent first
+    feedbacks = Feedback.query.order_by(Feedback.submitted_at.desc()).all()
+    
+    # Count unread feedback
+    unread_count = Feedback.query.filter_by(is_read=False).count()
+    
+    return render_template('admin/feedback.html', feedbacks=feedbacks, unread_count=unread_count)
+
+@app.route('/admin/feedback/<int:feedback_id>/read')
+@login_required
+def admin_mark_feedback_read(feedback_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    feedback = Feedback.query.get_or_404(feedback_id)
+    feedback.is_read = True
+    db.session.commit()
+    flash('Feedback marked as read.', 'success')
+    return redirect(url_for('admin_feedback'))
+
+@app.route('/admin/feedback/<int:feedback_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_feedback(feedback_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    feedback = Feedback.query.get_or_404(feedback_id)
+    db.session.delete(feedback)
+    db.session.commit()
+    flash('Feedback deleted successfully.', 'success')
+    return redirect(url_for('admin_feedback'))
+
+@app.route('/admin/feedback/mark-all-read')
+@login_required
+def admin_mark_all_feedback_read():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    Feedback.query.filter_by(is_read=False).update({'is_read': True})
+    db.session.commit()
+    flash('All feedback marked as read.', 'success')
+    return redirect(url_for('admin_feedback'))
+
+@app.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    if request.method == 'POST':
+        name = sanitize_input(request.form.get('name', 'Anonymous'))
+        email = sanitize_input(request.form.get('email', ''))
+        message = sanitize_input(request.form.get('message', ''))
+        
+        # Validate required fields
+        if not name or not message:
+            flash('Name and message are required!', 'error')
+            return redirect(url_for('feedback'))
+        
+        # Create feedback entry
+        feedback_entry = Feedback(
+            name=name,
+            email=email,
+            message=message,
+            user_id=current_user.id if current_user.is_authenticated else None
+        )
+        
+        try:
+            db.session.add(feedback_entry)
+            db.session.commit()
+            flash('Thank you for your feedback!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error submitting feedback. Please try again.', 'error')
+            print(f"Feedback submission error: {e}")
+        
+        return redirect(url_for('feedback'))
+    
+    return render_template('feedback.html')
 
 @app.route('/create-admin', methods=['GET', 'POST'])
 def create_admin():
@@ -444,7 +1058,6 @@ def create_admin():
     
     return render_template('create_admin.html')
 
-# Skill Analyzer Routes
 @app.route('/skill-analyzer')
 @login_required
 def skill_analyzer():
@@ -1349,517 +1962,6 @@ Welcome to your **45-day journey** to cybersecurity mastery! Each day has a focu
     
     db.session.commit()
 
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    # Get statistics
-    total_users = User.query.count()
-    total_skills = Skill.query.count()
-    total_jobs = Job.query.count()
-    total_courses = Course.query.count()
-    total_resources = Resource.query.count()
-    
-    # Get all users with their skills
-    users = User.query.all()
-    
-    # Get all skills with their trends
-    skills = Skill.query.all()
-    
-    # Get all certifications
-    certifications = Certification.query.all()
-    
-    # Get all courses
-    courses = Course.query.all()
-    
-    # Get all resources
-    resources = Resource.query.order_by(Resource.category, Resource.subsection, Resource.title).all()
-    
-    return render_template('admin/dashboard.html',
-                         total_users=total_users,
-                         total_skills=total_skills,
-                         total_jobs=total_jobs,
-                         total_courses=total_courses,
-                         total_resources=total_resources,
-                         users=users,
-                         skills=skills,
-                         certifications=certifications,
-                         courses=courses,
-                         resources=resources)
-
-@app.route('/admin/users/<int:user_id>')
-@login_required
-def admin_user_details(user_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    user = User.query.get_or_404(user_id)
-    user_skills = UserSkill.query.filter_by(user_id=user_id).all()
-    skill_progressions = SkillProgression.query.filter_by(user_id=user_id).all()
-    user_certifications = UserCertification.query.filter_by(user_id=user_id).all()
-    
-    return render_template('admin/user_details.html',
-                         user=user,
-                         user_skills=user_skills,
-                         skill_progressions=skill_progressions,
-                         user_certifications=user_certifications)
-
-@app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
-@login_required
-def admin_edit_user(user_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    user = User.query.get_or_404(user_id)
-    
-    if request.method == 'POST':
-        user.username = request.form.get('username')
-        user.role = request.form.get('role')
-        user.experience = int(request.form.get('experience', 0))
-        
-        # Update user skills
-        UserSkill.query.filter_by(user_id=user_id).delete()
-        for skill_id, proficiency in request.form.items():
-            if skill_id.startswith('skill_'):
-                skill_id = int(skill_id.split('_')[1])
-                proficiency = int(proficiency)
-                user_skill = UserSkill(
-                    user_id=user_id,
-                    skill_id=skill_id,
-                    proficiency=proficiency
-                )
-                db.session.add(user_skill)
-        
-        db.session.commit()
-        flash('User updated successfully.', 'success')
-        return redirect(url_for('admin_user_details', user_id=user_id))
-    
-    all_skills = Skill.query.all()
-    return render_template('admin/edit_user.html',
-                         user=user,
-                         all_skills=all_skills)
-
-@app.route('/admin/users/<int:user_id>', methods=['DELETE'])
-@login_required
-def admin_delete_user(user_id):
-    if current_user.role != 'admin':
-        return jsonify({'error': 'Access denied'}), 403
-    
-    user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'User deleted successfully'})
-
-@app.route('/admin/skills/add', methods=['GET', 'POST'])
-@login_required
-def admin_add_skill():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        name = request.form.get('name')
-        category = request.form.get('category')
-        demand_level = int(request.form.get('demand_level'))
-        trend_direction = request.form.get('trend_direction')
-        impact_percentage = float(request.form.get('impact_percentage'))
-        min_salary = float(request.form.get('min_salary'))
-        max_salary = float(request.form.get('max_salary'))
-        
-        skill = Skill(name=name, category=category)
-        db.session.add(skill)
-        db.session.flush()
-        
-        trend = IndustryTrend(
-            skill_id=skill.id,
-            demand_level=demand_level,
-            trend_direction=trend_direction
-        )
-        
-        impact = SalaryImpact(
-            skill_id=skill.id,
-            impact_percentage=impact_percentage,
-            min_salary=min_salary,
-            max_salary=max_salary
-        )
-        
-        db.session.add(trend)
-        db.session.add(impact)
-        db.session.commit()
-        
-        flash('Skill added successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('admin/add_skill.html')
-
-@app.route('/admin/skills/<int:skill_id>/edit', methods=['GET', 'POST'])
-@login_required
-def admin_edit_skill(skill_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    skill = Skill.query.get_or_404(skill_id)
-    trend = IndustryTrend.query.filter_by(skill_id=skill_id).first()
-    impact = SalaryImpact.query.filter_by(skill_id=skill_id).first()
-    
-    if request.method == 'POST':
-        skill.name = request.form.get('name')
-        skill.category = request.form.get('category')
-        
-        if trend:
-            trend.demand_level = int(request.form.get('demand_level'))
-            trend.trend_direction = request.form.get('trend_direction')
-        
-        if impact:
-            impact.impact_percentage = float(request.form.get('impact_percentage'))
-            impact.min_salary = float(request.form.get('min_salary'))
-            impact.max_salary = float(request.form.get('max_salary'))
-        
-        db.session.commit()
-        flash('Skill updated successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('admin/edit_skill.html',
-                         skill=skill,
-                         trend=trend,
-                         impact=impact)
-
-@app.route('/admin/skills/<int:skill_id>', methods=['DELETE'])
-@login_required
-def admin_delete_skill(skill_id):
-    if current_user.role != 'admin':
-        return jsonify({'error': 'Access denied'}), 403
-    
-    skill = Skill.query.get_or_404(skill_id)
-    db.session.delete(skill)
-    db.session.commit()
-    return jsonify({'message': 'Skill deleted successfully'})
-
-@app.route('/admin/certifications/add', methods=['GET', 'POST'])
-@login_required
-def admin_add_certification():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        name = request.form.get('name')
-        provider = request.form.get('provider')
-        description = request.form.get('description')
-        level = request.form.get('level')
-        validity_period = int(request.form.get('validity_period'))
-        url = request.form.get('url')
-        
-        certification = Certification(
-            name=name,
-            provider=provider,
-            description=description,
-            level=level,
-            validity_period=validity_period,
-            url=url
-        )
-        db.session.add(certification)
-        db.session.flush()
-        
-        # Add certification skills
-        skill_ids = request.form.getlist('skills')
-        proficiency_levels = request.form.getlist('proficiency_levels')
-        
-        for skill_id, proficiency in zip(skill_ids, proficiency_levels):
-            cert_skill = CertificationSkill(
-                certification_id=certification.id,
-                skill_id=int(skill_id),
-                proficiency_level=int(proficiency)
-            )
-            db.session.add(cert_skill)
-        
-        db.session.commit()
-        flash('Certification added successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    skills = Skill.query.all()
-    return render_template('admin/add_certification.html', skills=skills)
-
-@app.route('/admin/certifications/<int:cert_id>/edit', methods=['GET', 'POST'])
-@login_required
-def admin_edit_certification(cert_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    certification = Certification.query.get_or_404(cert_id)
-    cert_skills = CertificationSkill.query.filter_by(certification_id=cert_id).all()
-    
-    if request.method == 'POST':
-        certification.name = request.form.get('name')
-        certification.provider = request.form.get('provider')
-        certification.description = request.form.get('description')
-        certification.level = request.form.get('level')
-        certification.validity_period = int(request.form.get('validity_period'))
-        certification.url = request.form.get('url')
-        
-        # Update certification skills
-        CertificationSkill.query.filter_by(certification_id=cert_id).delete()
-        
-        skill_ids = request.form.getlist('skills')
-        proficiency_levels = request.form.getlist('proficiency_levels')
-        
-        for skill_id, proficiency in zip(skill_ids, proficiency_levels):
-            cert_skill = CertificationSkill(
-                certification_id=cert_id,
-                skill_id=int(skill_id),
-                proficiency_level=int(proficiency)
-            )
-            db.session.add(cert_skill)
-        
-        db.session.commit()
-        flash('Certification updated successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    all_skills = Skill.query.all()
-    return render_template('admin/edit_certification.html',
-                         certification=certification,
-                         cert_skills=cert_skills,
-                         all_skills=all_skills)
-
-@app.route('/admin/certifications/<int:cert_id>', methods=['DELETE'])
-@login_required
-def admin_delete_certification(cert_id):
-    if current_user.role != 'admin':
-        return jsonify({'error': 'Access denied'}), 403
-    
-    certification = Certification.query.get_or_404(cert_id)
-    db.session.delete(certification)
-    db.session.commit()
-    return jsonify({'message': 'Certification deleted successfully'})
-
-@app.route('/admin/courses/add', methods=['GET', 'POST'])
-@login_required
-def admin_add_course():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        title = request.form.get('title')
-        provider = request.form.get('provider')
-        description = request.form.get('description')
-        level = request.form.get('level')
-        duration = request.form.get('duration')
-        url = request.form.get('url')
-        
-        course = Course(
-            title=title,
-            provider=provider,
-            description=description,
-            level=level,
-            duration=duration,
-            url=url
-        )
-        db.session.add(course)
-        db.session.flush()
-        
-        # Add course skills
-        skill_ids = request.form.getlist('skills')
-        for skill_id in skill_ids:
-            course_skill = CourseSkill(
-                course_id=course.id,
-                skill_id=int(skill_id)
-            )
-            db.session.add(course_skill)
-        
-        db.session.commit()
-        flash('Course added successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    skills = Skill.query.all()
-    return render_template('admin/add_course.html', skills=skills)
-
-@app.route('/admin/courses/<int:course_id>/edit', methods=['GET', 'POST'])
-@login_required
-def admin_edit_course(course_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    course = Course.query.get_or_404(course_id)
-    course_skills = CourseSkill.query.filter_by(course_id=course_id).all()
-    
-    if request.method == 'POST':
-        course.title = request.form.get('title')
-        course.provider = request.form.get('provider')
-        course.description = request.form.get('description')
-        course.level = request.form.get('level')
-        course.duration = request.form.get('duration')
-        course.url = request.form.get('url')
-        
-        # Update course skills
-        CourseSkill.query.filter_by(course_id=course_id).delete()
-        
-        skill_ids = request.form.getlist('skills')
-        for skill_id in skill_ids:
-            course_skill = CourseSkill(
-                course_id=course_id,
-                skill_id=int(skill_id)
-            )
-            db.session.add(course_skill)
-        
-        db.session.commit()
-        flash('Course updated successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    all_skills = Skill.query.all()
-    return render_template('admin/edit_course.html',
-                         course=course,
-                         course_skills=course_skills,
-                         all_skills=all_skills)
-
-@app.route('/admin/courses/<int:course_id>', methods=['DELETE'])
-@login_required
-def admin_delete_course(course_id):
-    if current_user.role != 'admin':
-        return jsonify({'error': 'Access denied'}), 403
-    
-    course = Course.query.get_or_404(course_id)
-    db.session.delete(course)
-    db.session.commit()
-    return jsonify({'message': 'Course deleted successfully'})
-
-@app.route('/admin/resources/add', methods=['GET', 'POST'])
-@login_required
-def admin_add_resource():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        category = request.form['category']
-        subsection = request.form['subsection']
-        difficulty = request.form['difficulty']
-        duration = request.form['duration']
-        content = request.form['content']
-        external_url = request.form.get('external_url', '')
-        is_active = 'is_active' in request.form
-        
-        resource = Resource(
-            title=title,
-            description=description,
-            category=category,
-            subsection=subsection,
-            difficulty=difficulty,
-            duration=duration,
-            content=content,
-            external_url=external_url,
-            is_active=is_active
-        )
-        
-        db.session.add(resource)
-        db.session.commit()
-        
-        flash('Resource added successfully!', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('admin/add_resource.html')
-
-@app.route('/admin/resources/<int:resource_id>/edit', methods=['GET', 'POST'])
-@login_required
-def admin_edit_resource(resource_id):
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    resource = Resource.query.get_or_404(resource_id)
-    
-    if request.method == 'POST':
-        resource.title = request.form['title']
-        resource.description = request.form['description']
-        resource.category = request.form['category']
-        resource.subsection = request.form['subsection']
-        resource.difficulty = request.form['difficulty']
-        resource.duration = request.form['duration']
-        resource.content = request.form['content']
-        resource.external_url = request.form.get('external_url', '')
-        resource.is_active = 'is_active' in request.form
-        
-        db.session.commit()
-        
-        flash('Resource updated successfully!', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('admin/edit_resource.html', resource=resource)
-
-@app.route('/admin/resources/<int:resource_id>', methods=['DELETE'])
-@login_required
-def admin_delete_resource(resource_id):
-    if current_user.role != 'admin':
-        return jsonify({'error': 'Access denied'}), 403
-    
-    resource = Resource.query.get_or_404(resource_id)
-    db.session.delete(resource)
-    db.session.commit()
-    return jsonify({'message': 'Resource deleted successfully'})
-
-@app.route('/populate-resources')
-@login_required
-def populate_resources():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    try:
-        populate_initial_resources()
-        flash('Resources populated successfully!', 'success')
-    except Exception as e:
-        flash(f'Error populating resources: {str(e)}', 'error')
-    
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/security-status')
-@login_required
-def admin_security_status():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin privileges required.', 'error')
-        return redirect(url_for('index'))
-    
-    # Import security functions
-    try:
-        from security_config import get_security_status
-        status = get_security_status()
-    except ImportError:
-        status = {
-            'environment_valid': False,
-            'missing_variables': ['security_config module not found'],
-            'debug_mode': os.environ.get('FLASK_DEBUG', 'False').lower() == 'true',
-            'secure_cookies': os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true',
-            'secret_key_set': bool(os.environ.get('SECRET_KEY')),
-            'admin_configured': bool(os.environ.get('ADMIN_USERNAME') and os.environ.get('ADMIN_PASSWORD'))
-        }
-    
-    return render_template('admin/security_status.html', status=status)
-
-@app.route('/feedback', methods=['GET', 'POST'])
-def feedback():
-    if request.method == 'POST':
-        name = request.form.get('name', 'Anonymous')
-        email = request.form.get('email', '')
-        message = request.form.get('message', '')
-        timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        feedback_line = f"[{timestamp}] Name: {name}, Email: {email}, Message: {message}\n"
-        feedback_path = os.path.join(os.path.dirname(__file__), 'feedback.txt')
-        with open(feedback_path, 'a', encoding='utf-8') as f:
-            f.write(feedback_line)
-        flash('Thank you for your feedback!', 'success')
-        return redirect(url_for('feedback'))
-    return render_template('feedback.html')
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
@@ -1882,136 +1984,6 @@ if __name__ == '__main__':
         else:
             print("Admin credentials not provided in environment variables.")
             print("To create admin user, set: ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD")
-
-        # Initialize skills and jobs if they don't exist
-        if not Skill.query.first():
-            # Cybersecurity Skills
-            skills = [
-                Skill(name='Network Security', category='Networking', 
-                      description='Understanding of network protocols, firewalls, and security measures'),
-                Skill(name='Penetration Testing', category='Offensive Security',
-                      description='Ability to perform security assessments and vulnerability testing'),
-                Skill(name='Security Operations', category='Defensive Security',
-                      description='Experience with SIEM tools and security monitoring'),
-                Skill(name='Incident Response', category='Defensive Security',
-                      description='Handling and responding to security incidents'),
-                Skill(name='Malware Analysis', category='Forensics',
-                      description='Analyzing and understanding malicious software'),
-                Skill(name='Cryptography', category='Security Fundamentals',
-                      description='Understanding of encryption and cryptographic protocols'),
-                Skill(name='Cloud Security', category='Cloud',
-                      description='Security in cloud environments (AWS, Azure, GCP)'),
-                Skill(name='Web Application Security', category='Application Security',
-                      description='Securing web applications and APIs'),
-                Skill(name='Security Compliance', category='Governance',
-                      description='Understanding of security standards and compliance requirements'),
-                Skill(name='Threat Intelligence', category='Intelligence',
-                      description='Analyzing and understanding security threats')
-            ]
-            db.session.add_all(skills)
-            db.session.commit()
-
-            # Cybersecurity Jobs
-            jobs = [
-                Job(
-                    title='Security Analyst',
-                    description='Monitor and analyze security events, investigate incidents, and implement security measures.',
-                    salary_range='$60,000 - $90,000',
-                    category='Entry Level'
-                ),
-                Job(
-                    title='Penetration Tester',
-                    description='Perform security assessments, identify vulnerabilities, and provide remediation recommendations.',
-                    salary_range='$80,000 - $120,000',
-                    category='Mid Level'
-                ),
-                Job(
-                    title='Security Engineer',
-                    description='Design and implement security solutions, manage security infrastructure, and respond to incidents.',
-                    salary_range='$90,000 - $130,000',
-                    category='Mid Level'
-                ),
-                Job(
-                    title='Security Architect',
-                    description='Design and implement security architecture, develop security strategies, and provide technical leadership.',
-                    salary_range='$120,000 - $180,000',
-                    category='Senior Level'
-                ),
-                Job(
-                    title='Security Operations Center (SOC) Manager',
-                    description='Lead security operations, manage incident response, and oversee security monitoring.',
-                    salary_range='$100,000 - $150,000',
-                    category='Senior Level'
-                )
-            ]
-            db.session.add_all(jobs)
-            db.session.commit()
-
-            # Add required skills for each job
-            job_skills = [
-                # Security Analyst
-                JobSkill(job_id=1, skill_id=1, required_proficiency=3),  # Network Security
-                JobSkill(job_id=1, skill_id=3, required_proficiency=3),  # Security Operations
-                JobSkill(job_id=1, skill_id=4, required_proficiency=2),  # Incident Response
-                
-                # Penetration Tester
-                JobSkill(job_id=2, skill_id=2, required_proficiency=4),  # Penetration Testing
-                JobSkill(job_id=2, skill_id=8, required_proficiency=3),  # Web Application Security
-                JobSkill(job_id=2, skill_id=1, required_proficiency=3),  # Network Security
-                
-                # Security Engineer
-                JobSkill(job_id=3, skill_id=1, required_proficiency=4),  # Network Security
-                JobSkill(job_id=3, skill_id=7, required_proficiency=3),  # Cloud Security
-                JobSkill(job_id=3, skill_id=3, required_proficiency=4),  # Security Operations
-                
-                # Security Architect
-                JobSkill(job_id=4, skill_id=1, required_proficiency=5),  # Network Security
-                JobSkill(job_id=4, skill_id=7, required_proficiency=4),  # Cloud Security
-                JobSkill(job_id=4, skill_id=9, required_proficiency=4),  # Security Compliance
-                
-                # SOC Manager
-                JobSkill(job_id=5, skill_id=3, required_proficiency=5),  # Security Operations
-                JobSkill(job_id=5, skill_id=4, required_proficiency=4),  # Incident Response
-                JobSkill(job_id=5, skill_id=10, required_proficiency=4)  # Threat Intelligence
-            ]
-            db.session.add_all(job_skills)
-            db.session.commit()
-
-            # Add some sample courses
-            courses = [
-                Course(
-                    title='Network Security Fundamentals',
-                    provider='Coursera',
-                    description='Learn the basics of network security, including protocols, firewalls, and security measures.',
-                    level='Beginner',
-                    url='https://www.coursera.org/learn/network-security'
-                ),
-                Course(
-                    title='Ethical Hacking and Penetration Testing',
-                    provider='Udemy',
-                    description='Master the art of penetration testing and ethical hacking techniques.',
-                    level='Intermediate',
-                    url='https://www.udemy.com/course/ethical-hacking-penetration-testing'
-                ),
-                Course(
-                    title='Cloud Security Architecture',
-                    provider='AWS',
-                    description='Learn to design and implement secure cloud architectures.',
-                    level='Advanced',
-                    url='https://aws.amazon.com/training/security'
-                )
-            ]
-            db.session.add_all(courses)
-            db.session.commit()
-
-            # Add skills taught in courses
-            course_skills = [
-                CourseSkill(course_id=1, skill_id=1),  # Network Security
-                CourseSkill(course_id=2, skill_id=2),  # Penetration Testing
-                CourseSkill(course_id=3, skill_id=7)   # Cloud Security
-            ]
-            db.session.add_all(course_skills)
-            db.session.commit()
 
     # Only run in debug mode if explicitly set in environment
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'

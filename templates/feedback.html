@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<div style="max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #14213d22; padding: 2rem;">
-    <h2 style="color:#ff8500; text-align:center;">We Value Your Feedback</h2>
+<div class="feedback-form">
+    <h2>We Value Your Feedback</h2>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -10,19 +10,19 @@
       {% endif %}
     {% endwith %}
     <form method="POST" action="{{ url_for('feedback') }}">
-        <div style="margin-bottom:1rem;">
-            <label for="name">Name</label>
-            <input type="text" name="name" id="name" class="form-control" style="width:100%;padding:0.5rem;">
+        <div class="form-group">
+            <label for="name">Name *</label>
+            <input type="text" name="name" id="name" class="form-control" required>
         </div>
-        <div style="margin-bottom:1rem;">
+        <div class="form-group">
             <label for="email">Email (optional)</label>
-            <input type="email" name="email" id="email" class="form-control" style="width:100%;padding:0.5rem;">
+            <input type="email" name="email" id="email" class="form-control">
         </div>
-        <div style="margin-bottom:1rem;">
-            <label for="message">Your Feedback</label>
-            <textarea name="message" id="message" class="form-control" rows="5" required style="width:100%;padding:0.5rem;"></textarea>
+        <div class="form-group">
+            <label for="message">Your Feedback *</label>
+            <textarea name="message" id="message" class="form-control" rows="5" required placeholder="Share your thoughts, suggestions, or report any issues..."></textarea>
         </div>
-        <button type="submit" class="btn" style="background:#ff8500;color:white;width:100%;">Submit Feedback</button>
+        <button type="submit" class="btn" style="width:100%;">Submit Feedback</button>
     </form>
 </div>
 {% endblock %} 
