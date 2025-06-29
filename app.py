@@ -18,18 +18,20 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     # Production: Use PostgreSQL from environment
     if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+pg8000://', 1)
+    elif DATABASE_URL.startswith('postgresql://'):
+        DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+pg8000://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 else:
     # Development: Try PostgreSQL first, fallback to SQLite
     try:
-        import psycopg2
+        import pg8000
         # Test PostgreSQL connection
-        test_conn = psycopg2.connect("postgresql://localhost/sutrabyte_dev")
+        test_conn = pg8000.connect("postgresql://localhost/sutrabyte_dev")
         test_conn.close()
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/sutrabyte_dev'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+pg8000://localhost/sutrabyte_dev'
         print("🔗 Using PostgreSQL for local development")
-    except (ImportError, psycopg2.OperationalError):
+    except (ImportError, Exception):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
         print("💾 PostgreSQL not available, using SQLite for local development")
         print("💡 Install PostgreSQL for better performance: https://www.postgresql.org/download/")
