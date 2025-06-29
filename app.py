@@ -12,30 +12,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key')
-
-# Database configuration - PostgreSQL by default, SQLite fallback for local development
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    # Production: Use PostgreSQL from environment
-    if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+pg8000://', 1)
-    elif DATABASE_URL.startswith('postgresql://'):
-        DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+pg8000://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-else:
-    # Development: Try PostgreSQL first, fallback to SQLite
-    try:
-        import pg8000
-        # Test PostgreSQL connection
-        test_conn = pg8000.connect("postgresql://localhost/sutrabyte_dev")
-        test_conn.close()
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+pg8000://localhost/sutrabyte_dev'
-        print("🔗 Using PostgreSQL for local development")
-    except (ImportError, Exception):
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
-        print("💾 PostgreSQL not available, using SQLite for local development")
-        print("💡 Install PostgreSQL for better performance: https://www.postgresql.org/download/")
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Security best practice for production

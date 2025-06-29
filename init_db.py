@@ -17,18 +17,9 @@ from werkzeug.security import generate_password_hash
 def init_database():
     """Initialize the database with all tables and sample data"""
     with app.app_context():
-        print("🔧 Database Configuration:")
-        print(f"   Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-        
-        print("\n📦 Creating database tables...")
-        try:
-            db.create_all()
-            print("✅ Database tables created successfully!")
-        except Exception as e:
-            print(f"❌ Error creating tables: {e}")
-            print("💡 Make sure PostgreSQL is running and the database exists.")
-            print("   For local development, create database: createdb sutrabyte_dev")
-            return
+        print("Creating database tables...")
+        db.create_all()
+        print("✅ Database tables created successfully!")
         
         # Create admin user if environment variables are set
         admin_username = os.environ.get('ADMIN_USERNAME')
@@ -51,7 +42,7 @@ def init_database():
 
         # Initialize skills and jobs if they don't exist
         if not Skill.query.first():
-            print("\n🎯 Creating initial skills and jobs...")
+            print("Creating initial skills and jobs...")
             
             # Cybersecurity Skills
             skills = [

@@ -11,28 +11,26 @@ A comprehensive web application for assessing, tracking, and developing cybersec
 - **Resource Management**: Curated learning materials and tools
 - **Admin Dashboard**: Comprehensive management interface
 - **Security Analytics**: Industry trends and salary impact analysis
-- **Feedback System**: User feedback management with admin panel
 
 ## Technology Stack
 
 - **Backend**: Flask (Python)
-- **Database**: PostgreSQL (production) / Local PostgreSQL (development)
+- **Database**: SQLite (development) / PostgreSQL (production)
 - **Authentication**: Flask-Login
 - **Frontend**: HTML, CSS, JavaScript
-- **Deployment**: Render ready with PostgreSQL
+- **Deployment**: Render/Railway/Heroku ready
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.11+
 - pip
-- PostgreSQL (for local development)
 
 ### Installation
 
 1. Clone the repository
 ```bash
-git clone <your-private-repo-url>
+git clone https://github.com/Vinayakgupta1/SutraByte
 cd SutraByte
 ```
 
@@ -47,30 +45,16 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up PostgreSQL database (local development)
-```bash
-# Create database
-createdb sutrabyte_dev
-
-# Or set custom DATABASE_URL in .env file
-```
-
-5. Set up environment variables
+4. Set up environment variables
 ```bash
 # Create .env file with:
 SECRET_KEY=your-secret-key
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=secure-password
-DATABASE_URL=postgresql://localhost/sutrabyte_dev  # Optional for local dev
 ```
 
-6. Initialize database
-```bash
-python init_db.py
-```
-
-7. Run the application
+5. Run the application
 ```bash
 python app.py
 ```
@@ -86,28 +70,17 @@ SECRET_KEY=your-secret-key-here
 ADMIN_USERNAME=your-admin-username
 ADMIN_EMAIL=your-admin-email
 ADMIN_PASSWORD=your-admin-password
-DATABASE_URL=postgresql://username:password@host:port/database  # For production
 FLASK_DEBUG=False
 ```
 
 ## Deployment
 
-This application is configured for deployment on Render with PostgreSQL:
+This application is configured for deployment on:
+- **Render** (recommended)
+- **Railway**
+- **Heroku**
 
-1. **Create PostgreSQL Database** in Render
-2. **Set Environment Variables**:
-   - `DATABASE_URL` (from Render PostgreSQL)
-   - `SECRET_KEY`
-   - `ADMIN_USERNAME`
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
-3. **Deploy** - Database will be initialized automatically
-
-## Database Configuration
-
-- **Production**: Uses `DATABASE_URL` environment variable (PostgreSQL on Render)
-- **Development**: Uses local PostgreSQL database `sutrabyte_dev`
-- **Automatic**: Database tables created on first run
+See deployment-specific documentation for setup instructions.
 
 ## Security Features
 
