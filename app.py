@@ -72,6 +72,8 @@ class User(db.Model, UserMixin):
     registered_on = db.Column(db.DateTime, default=datetime.utcnow)
     skills = db.relationship('UserSkill', backref='user', lazy=True)
     experience = db.Column(db.Integer, default=0)  # Years of experience
+    used = db.Column(db.Boolean, default=False)  # New: track if pre-generated user is assigned
+    plain_password = db.Column(db.String(64), nullable=True)  # Store generated password for display
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -204,6 +206,16 @@ class Feedback(db.Model):
     
     user = db.relationship('User', backref=db.backref('feedbacks', lazy=True))
 
+class Blog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    # Add more fields as needed (e.g., tags, summary)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -256,7 +268,31 @@ def resources_by_category(category):
 @app.route('/blog')
 @login_required
 def blog():
-    return render_template('blog.html')
+    # List of blog posts to display
+    blog_posts = [
+        {
+            'title': 'Getting Started in Cybersecurity',
+            'url': url_for('blog_getting_started'),
+            'date': 'January 15, 2025',
+            'author': 'Vinayak (CyberGupta)',
+            'summary': 'A roadmap for beginners to start their journey in cybersecurity.'
+        },
+        {
+            'title': 'Top 5 Free Tools for Ethical Hackers',
+            'url': url_for('blog_top_5_tools'),
+            'date': 'January 18, 2025',
+            'author': 'Vinayak (CyberGupta)',
+            'summary': 'Explore five essential free tools every ethical hacker should master.'
+        },
+        {
+            'title': 'How to Practice Safely',
+            'url': url_for('blog_practice_safely'),
+            'date': 'January 20, 2025',
+            'author': 'Vinayak (CyberGupta)',
+            'summary': 'A guide to practicing cybersecurity skills safely, legally, and ethically.'
+        }
+    ]
+    return render_template('blog.html', blog_posts=blog_posts)
 
 @app.route('/blog/getting-started')
 @login_required
@@ -279,62 +315,26 @@ def register():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        # Sanitize inputs
-        username = sanitize_input(request.form.get('username', ''))
         email = sanitize_input(request.form.get('email', ''))
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        
-        # Validate inputs
-        if not username or not email or not password:
-            flash('All fields are required.', 'error')
+        if not email:
+            flash('Email is required.', 'error')
             return render_template('register.html')
-        
-        # Validate username
-        username_valid, username_msg = validate_username(username)
-        if not username_valid:
-            flash(username_msg, 'error')
-            return render_template('register.html')
-        
-        # Validate email
         if not validate_email(email):
             flash('Please enter a valid email address.', 'error')
             return render_template('register.html')
-        
-        # Validate password
-        password_valid, password_msg = validate_password(password)
-        if not password_valid:
-            flash(password_msg, 'error')
-            return render_template('register.html')
-        
-        # Check password confirmation
-        if password != confirm_password:
-            flash('Passwords do not match.', 'error')
-            return render_template('register.html')
-        
-        # Check if username already exists
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'error')
-            return render_template('register.html')
-        
-        # Check if email already exists
         if User.query.filter_by(email=email).first():
             flash('Email already registered.', 'error')
             return render_template('register.html')
-        
-        # Create user
-        try:
-            user = User(username=username, email=email, role='student')
-            user.set_password(password)
-            db.session.add(user)
-            db.session.commit()
-            flash('Registration successful. Please log in.', 'success')
-            return redirect(url_for('login'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Registration failed. Please try again.', 'error')
+        # Find an unused pre-generated user
+        user = User.query.filter_by(used=False, role='student').first()
+        if not user:
+            flash('No more accounts available. Please contact support.', 'error')
             return render_template('register.html')
-    
+        user.email = email
+        user.used = True
+        db.session.commit()
+        # Show credentials on screen
+        return render_template('show_credentials.html', username=user.username, password=user.plain_password, email=user.email)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -1940,6 +1940,111 @@ Welcome to your **45-day journey** to cybersecurity mastery! Each day has a focu
         db.session.add(resource)
     
     db.session.commit()
+
+@app.route('/admin/blogs')
+@login_required
+def admin_blogs():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    blogs = Blog.query.order_by(Blog.created_at.desc()).all()
+    return render_template('admin/blogs.html', blogs=blogs)
+
+@app.route('/admin/blogs/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_blog():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        author = request.form['author']
+        is_active = 'is_active' in request.form
+        blog = Blog(title=title, content=content, author=author, is_active=is_active)
+        db.session.add(blog)
+        db.session.commit()
+        flash('Blog post added successfully!', 'success')
+        return redirect(url_for('admin_blogs'))
+    return render_template('admin/add_blog.html')
+
+@app.route('/admin/blogs/<int:blog_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_edit_blog(blog_id):
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    blog = Blog.query.get_or_404(blog_id)
+    if request.method == 'POST':
+        blog.title = request.form['title']
+        blog.content = request.form['content']
+        blog.author = request.form['author']
+        blog.is_active = 'is_active' in request.form
+        db.session.commit()
+        flash('Blog post updated successfully!', 'success')
+        return redirect(url_for('admin_blogs'))
+    return render_template('admin/edit_blog.html', blog=blog)
+
+@app.route('/admin/blogs/<int:blog_id>', methods=['DELETE'])
+@login_required
+def admin_delete_blog(blog_id):
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    blog = Blog.query.get_or_404(blog_id)
+    db.session.delete(blog)
+    db.session.commit()
+    return jsonify({'message': 'Blog post deleted successfully'})
+
+@app.route('/blog/<int:blog_id>')
+def blog_detail(blog_id):
+    blog = Blog.query.get_or_404(blog_id)
+    return render_template('blog_detail.html', blog=blog)
+
+def insert_sample_blogs():
+    from datetime import datetime
+    sample_blogs = [
+        {
+            'title': 'Getting Started in Cybersecurity',
+            'author': 'Vinayak (CyberGupta)',
+            'content': 'Tips and resources for absolute beginners. How to build habits and avoid overwhelm.\n\nCybersecurity can seem overwhelming at first glance. With countless tools, techniques, and certifications, where do you even begin? This guide will help you navigate the initial steps and build a solid foundation for your cybersecurity journey.\n\n(You can expand this content as needed.)',
+            'is_active': True,
+        },
+        {
+            'title': 'Top 5 Free Tools for Ethical Hackers',
+            'author': 'Vinayak (CyberGupta)',
+            'content': 'Discover essential free tools every aspiring ethical hacker should know and use.\n\n(You can expand this content as needed.)',
+            'is_active': True,
+        },
+        {
+            'title': 'How to Practice Safely',
+            'author': 'Vinayak (CyberGupta)',
+            'content': 'Learn about legal and ethical hacking, safe environments, and responsible disclosure.\n\n(You can expand this content as needed.)',
+            'is_active': True,
+        },
+    ]
+    for blog in sample_blogs:
+        exists = Blog.query.filter_by(title=blog['title']).first()
+        if not exists:
+            b = Blog(
+                title=blog['title'],
+                author=blog['author'],
+                content=blog['content'],
+                is_active=blog['is_active'],
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            db.session.add(b)
+    db.session.commit()
+
+@app.route('/admin/insert-sample-blogs')
+@login_required
+def admin_insert_sample_blogs():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    insert_sample_blogs()
+    flash('Sample blogs inserted!', 'success')
+    return redirect(url_for('admin_blogs'))
 
 if __name__ == '__main__':
     with app.app_context():

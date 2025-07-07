@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="blog-post" style="max-width: 800px; margin: 2rem auto;">
+    <a href="{{ url_for('blog') }}" class="btn btn-secondary" style="margin-bottom: 1.5rem;">← Back to Blog</a>
+    <h1 style="color: var(--saffron);">{{ blog.title }}</h1>
+    <div style="color: #888; font-size: 1rem; margin-bottom: 1.5rem;">
+        By {{ blog.author }} | {{ blog.created_at.strftime('%Y-%m-%d') }}
+    </div>
+    <div class="blog-content" style="font-size: 1.15rem; line-height: 1.8;">
+        {{ blog.content | safe }}
+    </div>
+</div>
+{% endblock %} 

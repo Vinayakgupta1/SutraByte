@@ -7,20 +7,17 @@
     <div class="tagline">Decode. Defend. Develop.</div>
 </div>
 <div class="card-grid">
-    <div class="card">
-        <h3>Getting Started in Cybersecurity</h3>
-        <p>Tips and resources for absolute beginners. How to build habits and avoid overwhelm.</p>
-        <a href="/blog/getting-started" class="btn">Read More</a>
-    </div>
-    <div class="card">
-        <h3>Top 5 Free Tools for Ethical Hackers</h3>
-        <p>Discover essential free tools every aspiring ethical hacker should know and use.</p>
-        <a href="/blog/top-5-tools" class="btn">Read More</a>
-    </div>
-    <div class="card">
-        <h3>How to Practice Safely</h3>
-        <p>Learn about legal and ethical hacking, safe environments, and responsible disclosure.</p>
-        <a href="/blog/practice-safely" class="btn">Read More</a>
-    </div>
+    {% if blog_posts|length == 0 %}
+        <div style="text-align:center; width:100%;">No blog posts yet. Check back soon!</div>
+    {% else %}
+        {% for blog in blog_posts %}
+        <div class="card">
+            <h3>{{ blog.title }}</h3>
+            <p>{{ blog.summary }}</p>
+            <div style="font-size:0.95rem; color:#888; margin-bottom:0.5rem;">By {{ blog.author }} | {{ blog.date }}</div>
+            <a href="{{ blog.url }}" class="btn">Read More</a>
+        </div>
+        {% endfor %}
+    {% endif %}
 </div>
 {% endblock %} 

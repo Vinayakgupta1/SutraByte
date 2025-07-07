@@ -48,8 +48,7 @@ def check_requirements_txt():
             'Flask',
             'Flask-SQLAlchemy',
             'Flask-Login',
-            'gunicorn',
-            'psycopg2-binary'
+            'gunicorn'
         ]
         
         missing_packages = []
@@ -75,10 +74,6 @@ def generate_env_template():
     
     env_template = f"""# Render Deployment Environment Variables
 # Copy these values to your Render environment variables
-
-# Database Configuration
-DATABASE_URL=postgresql://user:password@host:port/database
-# ^ Replace with your Render PostgreSQL Internal Database URL
 
 # Security
 SECRET_KEY={secret_key}
@@ -125,16 +120,15 @@ def main():
     print("\n3. Deployment Checklist:")
     print("✅ Code is in a private GitHub repository")
     print("✅ All files are committed and pushed")
-    print("✅ PostgreSQL database created on Render")
+    print("✅ SQLite database will be used (no PostgreSQL required)")
     print("✅ Web service created on Render")
     print("✅ Environment variables set in Render")
     
     print("\n📋 Next Steps:")
-    print("1. Go to render.com and create a PostgreSQL database")
-    print("2. Create a web service and connect your GitHub repo")
-    print("3. Set environment variables using the .env.render template")
-    print("4. Deploy and test your application")
-    print("5. Access your admin panel at: https://your-app.onrender.com/create-admin")
+    print("1. Go to render.com and create a web service and connect your GitHub repo")
+    print("2. Set environment variables using the .env.render template")
+    print("3. Deploy and test your application")
+    print("4. Access your admin panel at: https://your-app.onrender.com/create-admin")
     
     print("\n📚 For detailed instructions, see: DEPLOYMENT_GUIDE.md")
     print("🔗 Render Dashboard: https://dashboard.render.com")

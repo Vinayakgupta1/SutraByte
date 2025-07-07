@@ -15,7 +15,7 @@ A comprehensive web application for assessing, tracking, and developing cybersec
 ## Technology Stack
 
 - **Backend**: Flask (Python)
-- **Database**: SQLite (development) / PostgreSQL (production)
+- **Database**: SQLite
 - **Authentication**: Flask-Login
 - **Frontend**: HTML, CSS, JavaScript
 - **Deployment**: Render/Railway/Heroku ready

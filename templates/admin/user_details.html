@@ -30,6 +30,14 @@
                 <label>Registered:</label>
                 <span>{{ user.registered_on.strftime('%Y-%m-%d') }}</span>
             </div>
+            <div class="info-item">
+                <label>Status:</label>
+                {% if user.used %}
+                    <span style="color:green;font-weight:bold;">Online</span>
+                {% else %}
+                    <span style="color:gray;font-weight:bold;">Offline</span>
+                {% endif %}
+            </div>
         </div>
     </section>
 
