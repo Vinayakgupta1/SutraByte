@@ -182,8 +182,18 @@ def init_database():
             print("ℹ️ Skills and jobs already exist, skipping initialization.")
 
         # Pre-generate 100 users if not already present
-        # (Removed: No demo users will be created. Only admin user will be created if credentials are provided.)
-        
+        if User.query.count() < 100:
+            print("Generating 100 pre-registered users...")
+            for i in range(1, 101):
+                username = f'user{i:03d}'
+                password = ''.join(random.choices(string.ascii_letters + string.digits + '!@#$%^&*', k=12))
+                email = f'user{i:03d}@example.com'
+                user = User(username=username, email=email, role='student', used=False, plain_password=password)
+                user.password_hash = generate_password_hash(password)
+                db.session.add(user)
+            db.session.commit()
+            print("✅ 100 users generated.")
+
         print("\n🎉 Database initialization completed successfully!")
         print("You can now start the application.")
 

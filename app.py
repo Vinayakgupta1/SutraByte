@@ -1,6 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -13,22 +12,13 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key')
-
-# Database configuration - PostgreSQL for production, SQLite for development
-if os.environ.get('DATABASE_URL'):
-    # Production: Use PostgreSQL from environment variable
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-else:
-    # Development: Use SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Security best practice for production
 app.config['SESSION_COOKIE_SECURE'] = True
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -325,14 +315,9 @@ def register():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        name = sanitize_input(request.form.get('name', ''))
         email = sanitize_input(request.form.get('email', ''))
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-
-        # Validate all fields
-        if not name or not email or not password or not confirm_password:
-            flash('All fields are required.', 'error')
+        if not email:
+            flash('Email is required.', 'error')
             return render_template('register.html')
         if not validate_email(email):
             flash('Please enter a valid email address.', 'error')
@@ -340,27 +325,16 @@ def register():
         if User.query.filter_by(email=email).first():
             flash('Email already registered.', 'error')
             return render_template('register.html')
-        if password != confirm_password:
-            flash('Passwords do not match.', 'error')
+        # Find an unused pre-generated user
+        user = User.query.filter_by(used=False, role='student').first()
+        if not user:
+            flash('No more accounts available. Please contact support.', 'error')
             return render_template('register.html')
-        password_valid, password_msg = validate_password(password)
-        if not password_valid:
-            flash(password_msg, 'error')
-            return render_template('register.html')
-        # Generate a unique username from name or email
-        base_username = re.sub(r'[^a-zA-Z0-9_]', '', name.lower().replace(' ', '_')) or email.split('@')[0]
-        username = base_username
-        counter = 1
-        while User.query.filter_by(username=username).first():
-            username = f"{base_username}{counter}"
-            counter += 1
-        # Create user
-        user = User(username=username, email=email, role='student')
-        user.set_password(password)
-        db.session.add(user)
+        user.email = email
+        user.used = True
         db.session.commit()
-        flash('Registration successful! You can now log in.', 'success')
-        return redirect(url_for('login'))
+        # Show credentials on screen
+        return render_template('show_credentials.html', username=user.username, password=user.plain_password, email=user.email)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -370,26 +344,26 @@ def login():
     
     if request.method == 'POST':
         # Sanitize inputs
-        identifier = sanitize_input(request.form.get('username', ''))
+        username = sanitize_input(request.form.get('username', ''))
         password = request.form.get('password', '')
         
         # Validate inputs
-        if not identifier or not password:
-            flash('Please enter both username/email and password.', 'error')
+        if not username or not password:
+            flash('Please enter both username and password.', 'error')
             return render_template('login.html')
         
         try:
-            # Try to find user by username or email
-            user = User.query.filter((User.username == identifier) | (User.email == identifier)).first()
+            user = User.query.filter_by(username=username).first()
             if user and user.check_password(password):
                 login_user(user)
                 flash('Logged in successfully.', 'success')
                 return redirect(url_for('index'))
             else:
-                # Don't reveal whether username/email or password is wrong
-                flash('Invalid username/email or password.', 'error')
+                # Don't reveal whether username or password is wrong
+                flash('Invalid username or password.', 'error')
         except Exception as e:
             flash('Login failed. Please try again.', 'error')
+    
     return render_template('login.html')
 
 @app.route('/logout')
