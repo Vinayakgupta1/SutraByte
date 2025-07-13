@@ -1,4 +1,6 @@
-from app_postgresql import app
+from app import app
+
+handler = app
 
 # For Vercel serverless deployment
 if __name__ == "__main__":
