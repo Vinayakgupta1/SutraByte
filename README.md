@@ -18,7 +18,7 @@ A comprehensive web application for assessing, tracking, and developing cybersec
 - **Database**: SQLite
 - **Authentication**: Flask-Login
 - **Frontend**: HTML, CSS, JavaScript
-- **Deployment**: Render/Railway/Heroku ready
+- **Deployment**: Vercel ready with PostgreSQL
 
 ## Quick Start
 
@@ -76,7 +76,7 @@ FLASK_DEBUG=False
 ## Deployment
 
 This application is configured for deployment on:
-- **Render** (recommended)
+- **Vercel** (recommended)
 - **Railway**
 - **Heroku**
 

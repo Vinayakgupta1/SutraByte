@@ -6,112 +6,59 @@ Run this script after setting up your PostgreSQL database
 
 import os
 import sys
-from datetime import datetime
-import sqlite3
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-def migrate_to_postgresql():
+def migrate_data():
     """Migrate data from SQLite to PostgreSQL"""
     
-    # Check if DATABASE_URL is set
-    database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        print("❌ DATABASE_URL environment variable not set!")
-        print("Please set DATABASE_URL to your PostgreSQL connection string")
-        return False
-    
-    # Check if SQLite database exists
-    sqlite_db_path = 'sutrabyte.db'
-    if not os.path.exists(sqlite_db_path):
-        print("❌ SQLite database not found!")
-        print("Make sure sutrabyte.db exists in the current directory")
-        return False
-    
-    print("🔄 Starting migration from SQLite to PostgreSQL...")
-    
+    # SQLite connection (source)
+    sqlite_engine = create_engine('sqlite:///instance/sutrabyte.db')
+    # PostgreSQL connection (destination)
+    if not os.environ.get('DATABASE_URL'):
+        print("Error: DATABASE_URL environment variable not set")
+        print("Please set your PostgreSQL connection string")
+        return
+    pg_engine = create_engine(os.environ.get('DATABASE_URL'))
+
     try:
-        # Connect to SQLite database
-        sqlite_conn = sqlite3.connect(sqlite_db_path)
-        sqlite_conn.row_factory = sqlite3.Row
-        sqlite_cursor = sqlite_conn.cursor()
-        
-        # Import Flask app and models
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-        from app import app, db, User, Skill, Job, JobSkill, Course, CourseSkill, IndustryTrend, SalaryImpact, Certification, Resource, Feedback, Blog, UserSkill, SkillProgression, UserCertification, CertificationSkill
-        
-        with app.app_context():
-            # Create all tables in PostgreSQL
-            print("📋 Creating PostgreSQL tables...")
-            db.create_all()
-            print("✅ PostgreSQL tables created!")
-            
-            # Migrate data table by table
-            tables_to_migrate = [
-                ('user', User),
-                ('skill', Skill),
-                ('job', Job),
-                ('course', Course),
-                ('certification', Certification),
-                ('resource', Resource),
-                ('feedback', Feedback),
-                ('blog', Blog),
-                ('user_skill', UserSkill),
-                ('job_skill', JobSkill),
-                ('course_skill', CourseSkill),
-                ('industry_trend', IndustryTrend),
-                ('salary_impact', SalaryImpact),
-                ('user_certification', UserCertification),
-                ('certification_skill', CertificationSkill),
-                ('skill_progression', SkillProgression)
-            ]
-            
-            for table_name, model in tables_to_migrate:
-                print(f"🔄 Migrating {table_name}...")
-                
+        with pg_engine.connect() as pg_conn, sqlite_engine.connect() as sqlite_conn:
+            # Test PostgreSQL connection
+            pg_conn.execute(text("SELECT 1"))
+            print("✅ PostgreSQL connection successful")
+            # Test SQLite connection
+            sqlite_conn.execute(text("SELECT 1"))
+            print("✅ SQLite connection successful")
+            # Get table names from SQLite
+            result = sqlite_conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+            tables = [row[0] for row in result]
+            print(f"Found tables: {tables}")
+            # Migrate each table
+            for table in tables:
+                if table == 'sqlite_sequence':
+                    continue
+                print(f"Migrating table: {table}")
                 # Get data from SQLite
-                sqlite_cursor.execute(f"SELECT * FROM {table_name}")
-                rows = sqlite_cursor.fetchall()
-                
-                if rows:
-                    # Convert rows to dictionaries
-                    for row in rows:
-                        row_dict = dict(row)
-                        
-                        # Handle datetime fields
-                        for key, value in row_dict.items():
-                            if isinstance(value, str) and 'datetime' in str(type(value)):
-                                try:
-                                    row_dict[key] = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                                except:
-                                    pass
-                        
-                        # Create new record in PostgreSQL
-                        try:
-                            new_record = model(**row_dict)
-                            db.session.add(new_record)
+                data = sqlite_conn.execute(text(f"SELECT * FROM {table}"))
+                columns = data.keys()
+                # Insert into PostgreSQL
+                for row in data:
+                    values = dict(zip(columns, row))
+                    placeholders = ', '.join([f':{col}' for col in columns])
+                    insert_query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+                    try:
+                        pg_conn.execute(text(insert_query), values)
                         except Exception as e:
-                            print(f"⚠️ Warning: Could not migrate record in {table_name}: {e}")
-                            continue
-                    
-                    db.session.commit()
-                    print(f"✅ Migrated {len(rows)} records from {table_name}")
-                else:
-                    print(f"ℹ️ No data to migrate from {table_name}")
-            
-            print("\n🎉 Migration completed successfully!")
-            print("Your data has been transferred from SQLite to PostgreSQL")
-            
+                        print(f"Warning: Could not insert row in {table}: {e}")
+                print(f"✅ Migrated table: {table}")
+            print("🎉 Migration completed successfully!")
     except Exception as e:
         print(f"❌ Migration failed: {e}")
-        return False
-    finally:
-        if 'sqlite_conn' in locals():
-            sqlite_conn.close()
-    
-    return True
 
-if __name__ == '__main__':
-    migrate_to_postgresql() 
+if __name__ == "__main__":
+    print("Starting SQLite to PostgreSQL migration...")
+    migrate_data() 

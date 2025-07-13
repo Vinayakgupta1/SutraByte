@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -12,13 +13,22 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
+
+# Database configuration - PostgreSQL for production, SQLite for development
+if os.environ.get('DATABASE_URL'):
+    # Production: Use PostgreSQL from environment variable
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+else:
+    # Development: Use SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sutrabyte.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Security best practice for production
 app.config['SESSION_COOKIE_SECURE'] = True
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -315,9 +325,14 @@ def register():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
+        name = sanitize_input(request.form.get('name', ''))
         email = sanitize_input(request.form.get('email', ''))
-        if not email:
-            flash('Email is required.', 'error')
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        # Validate all fields
+        if not name or not email or not password or not confirm_password:
+            flash('All fields are required.', 'error')
             return render_template('register.html')
         if not validate_email(email):
             flash('Please enter a valid email address.', 'error')
@@ -325,16 +340,27 @@ def register():
         if User.query.filter_by(email=email).first():
             flash('Email already registered.', 'error')
             return render_template('register.html')
-        # Find an unused pre-generated user
-        user = User.query.filter_by(used=False, role='student').first()
-        if not user:
-            flash('No more accounts available. Please contact support.', 'error')
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
             return render_template('register.html')
-        user.email = email
-        user.used = True
+        password_valid, password_msg = validate_password(password)
+        if not password_valid:
+            flash(password_msg, 'error')
+            return render_template('register.html')
+        # Generate a unique username from name or email
+        base_username = re.sub(r'[^a-zA-Z0-9_]', '', name.lower().replace(' ', '_')) or email.split('@')[0]
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+        # Create user
+        user = User(username=username, email=email, role='student')
+        user.set_password(password)
+        db.session.add(user)
         db.session.commit()
-        # Show credentials on screen
-        return render_template('show_credentials.html', username=user.username, password=user.plain_password, email=user.email)
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('login'))
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -344,26 +370,26 @@ def login():
     
     if request.method == 'POST':
         # Sanitize inputs
-        username = sanitize_input(request.form.get('username', ''))
+        identifier = sanitize_input(request.form.get('username', ''))
         password = request.form.get('password', '')
         
         # Validate inputs
-        if not username or not password:
-            flash('Please enter both username and password.', 'error')
+        if not identifier or not password:
+            flash('Please enter both username/email and password.', 'error')
             return render_template('login.html')
         
         try:
-            user = User.query.filter_by(username=username).first()
+            # Try to find user by username or email
+            user = User.query.filter((User.username == identifier) | (User.email == identifier)).first()
             if user and user.check_password(password):
                 login_user(user)
                 flash('Logged in successfully.', 'success')
                 return redirect(url_for('index'))
             else:
-                # Don't reveal whether username or password is wrong
-                flash('Invalid username or password.', 'error')
+                # Don't reveal whether username/email or password is wrong
+                flash('Invalid username/email or password.', 'error')
         except Exception as e:
             flash('Login failed. Please try again.', 'error')
-    
     return render_template('login.html')
 
 @app.route('/logout')
@@ -2047,28 +2073,7 @@ def admin_insert_sample_blogs():
     return redirect(url_for('admin_blogs'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        
-        # Secure admin user creation - only create if environment variables are set
-        admin_username = os.environ.get('ADMIN_USERNAME')
-        admin_email = os.environ.get('ADMIN_EMAIL')
-        admin_password = os.environ.get('ADMIN_PASSWORD')
-        
-        if admin_username and admin_email and admin_password:
-            admin_user = User.query.filter_by(username=admin_username).first()
-            if not admin_user:
-                admin_user = User(username=admin_username, email=admin_email, role='admin')
-                admin_user.set_password(admin_password)
-                db.session.add(admin_user)
-                db.session.commit()
-                print(f"Admin user '{admin_username}' created successfully.")
-            else:
-                print(f"Admin user '{admin_username}' already exists.")
-        else:
-            print("Admin credentials not provided in environment variables.")
-            print("To create admin user, set: ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD")
+    app.run(debug=True)
 
-    # Only run in debug mode if explicitly set in environment
-    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    app.run(debug=debug_mode, host='0.0.0.0', port=5000) 
+# For Vercel deployment
+app.debug = False
