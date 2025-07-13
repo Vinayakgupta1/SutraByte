@@ -1,0 +1,17 @@
+# Supabase PostgreSQL Database Configuration
+# Copy this to a file named .env in your project root
+
+# Database URL - Replace [YOUR-PASSWORD] with your actual database password
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.vxagyuidxthskmhqiaju.supabase.co:5432/postgres
+
+# Flask Secret Key (generate a secure random key)
+SECRET_KEY=your-32-character-secure-random-string-here
+
+# Admin Configuration (optional)
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@sutrabyte.com
+ADMIN_PASSWORD=admin123
+
+# Environment
+FLASK_ENV=production
+FLASK_DEBUG=False 

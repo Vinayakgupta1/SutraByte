@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app_postgresql.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app_postgresql.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "."
+  }
+} 
