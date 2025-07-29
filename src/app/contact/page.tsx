@@ -26,7 +26,7 @@ const socialLinks = [
     },
     {
         name: 'Anushika (Co-Founder) - Portfolio',
-        href: 'https://anushika006.github.io/Anushika-Portfolio/',
+        href: 'https://anushika006.github.io/anushika-portfolio/',
         icon: <User className="h-6 w-6 text-primary" />,
     },
 ];
