@@ -79,6 +79,20 @@ export default function AboutPage() {
             </blockquote>
           </CardContent>
         </Card>
+
+        <Card className="transition-all hover:shadow-glow hover:border-primary md:col-span-1 lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Meet the Co-Founder</CardTitle>
+            <p className="text-primary">Anushika Dutta</p>
+            <p className="text-sm text-muted-foreground">Cybersecurity Enthusiast & Creative Innovator</p>
+          </CardHeader>
+          <CardContent>
+            <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
+              "I helped start SutraByte because I believe learning cybersecurity should feel exciting, not intimidating. For me, it’s about sparking curiosity, encouraging creative problem‑solving, and helping people see that security isn’t just a skill — it’s a way of thinking that can change the digital world for the better."
+            </blockquote>
+          </CardContent>
+        </Card>
+
       </div>
 
        <div className="mt-16 text-center">
