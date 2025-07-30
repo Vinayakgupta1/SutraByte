@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sutrabyte.com'), // Replace with your production URL
+  metadataBase: new URL('https://sutrabyte.vercel.app'), // Updated deployment URL
   title: 'SutraByte - Learn Cybersecurity Skills',
   description: 'Enhance your cybersecurity knowledge and practices with SutraByte. Join our 45-day learning series covering everything from basics to advanced security concepts.',
   keywords: 'cybersecurity, ethical hacking, network security, penetration testing, information security, cyber defense',
@@ -52,10 +52,10 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'Ia8GWty3gq2EdmPm-cM215lF_RN9CnQ3DPWjQtsCx9s',
+    google: 'sj0yOPAf8-SI2cN28NunsTEQEOcGsI9JwErpSRqOyaU', // Updated verification code
   },
   alternates: {
-    canonical: 'https://sutrabyte.com',
+    canonical: 'https://sutrabyte.vercel.app', // Updated canonical URL
   },
 };
 
@@ -64,11 +64,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <head>
-      </head>
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
@@ -78,7 +75,7 @@ export default async function RootLayout({
         >
           <div className="relative flex min-h-screen flex-col">
             <Header />
-            <main className="flex-1">
+            <main className="flex-1 container max-w-[1400px] mx-auto">
               {children}
             </main>
             <Footer />

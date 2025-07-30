@@ -10,89 +10,93 @@ export default function AboutPage() {
       <div className="text-center space-y-4 mb-12">
         <SutraByteLogo className="h-24 w-24 mx-auto" />
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">About SutraByte</h1>
-        <p className="text-xl text-primary font-semibold">Empowering the Next Generation of Cyber Defenders</p>
+        <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
+          Learn about our mission and the team behind SutraByte.
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Card className="transition-all hover:shadow-glow hover:border-primary">
-          <CardHeader>
-            <CardTitle>Our Mission</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              To make cybersecurity education <strong className="text-foreground">accessible, ethical, and actionable</strong> for everyone—regardless of background or prior experience. We aim to build a safer digital world by equipping individuals with <strong className="text-foreground">structured, step-by-step learning paths</strong>, practical resources, and <strong className="text-foreground">real-world insights</strong> into ethical hacking and defense.
-            </p>
-          </CardContent>
+      <div className="grid md:grid-cols-3 gap-8 mb-12">
+        {/* Why SutraByte Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Why SutraByte?</CardTitle>
+            <CardContent>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Sutra (सूत्र):</strong> A Sanskrit word meaning "thread" or "guideline," symbolizing structured learning.
+              </p>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">Byte:</strong> The building block of digital information.
+              </p>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="transition-all hover:shadow-glow hover:border-primary">
-          <CardHeader>
-            <CardTitle>Our Vision</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              To evolve as a leading global platform where <strong className="text-foreground">timeless wisdom meets modern cybersecurity practices</strong>. SutraByte envisions a vibrant community of <strong className="text-foreground">ethical hackers, cyber defenders, and security innovators</strong> who actively shape the future of digital safety.
-            </p>
-          </CardContent>
+        {/* Mission Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Our Mission</CardTitle>
+            <CardContent>
+              <p className="text-muted-foreground">
+                To make cybersecurity education <strong className="text-foreground">accessible, ethical, and actionable</strong> for everyone—equipping individuals with structured learning paths and practical resources.
+              </p>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="transition-all hover:shadow-glow hover:border-primary lg:col-span-1 md:col-span-2">
-          <CardHeader>
-            <CardTitle>Our Values</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-muted-foreground list-disc list-inside">
-              <li><strong className="text-foreground">Accessibility:</strong> Learning should be free, open, and inclusive for everyone—no matter their background.</li>
-              <li><strong className="text-foreground">Ethics:</strong> We promote responsible, legal, and purposeful use of cybersecurity skills to protect and uplift.</li>
-              <li><strong className="text-foreground">Innovation:</strong> We blend ancient principles with cutting-edge digital practices to create practical knowledge.</li>
-              <li><strong className="text-foreground">Community:</strong> We grow together—learning, supporting, and mentoring each other as a global cyber tribe.</li>
-            </ul>
-          </CardContent>
+        {/* Vision Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Our Vision</CardTitle>
+            <CardContent>
+              <p className="text-muted-foreground">
+                To evolve as a leading global platform where <strong className="text-foreground">timeless wisdom meets modern cybersecurity</strong>, building a community of ethical hackers and defenders.
+              </p>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="transition-all hover:shadow-glow hover:border-primary md:col-span-1 lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Why SutraByte?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-2">
-              <strong className="text-foreground">Sutra (सूत्र):</strong> A Sanskrit word meaning "thread," "guideline," or "formula"—symbolizing timeless wisdom and structured learning.
-            </p>
-            <p className="text-muted-foreground">
-              <strong className="text-foreground">Byte:</strong> The building block of digital information in computing.
-            </p>
-            <p className="text-muted-foreground mt-4 italic">
-              SutraByte weaves these two worlds together—<strong className="text-foreground">fusing ancient wisdom and modern digital intelligence</strong> to build a safer, smarter cyber world.
-            </p>
-          </CardContent>
+        {/* Values Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Our Values</CardTitle>
+            <CardContent>
+              <ul className="space-y-2 text-muted-foreground list-disc list-inside">
+                <li><strong className="text-foreground">Accessibility:</strong> Free and inclusive learning</li>
+                <li><strong className="text-foreground">Ethics:</strong> Responsible use of skills</li>
+                <li><strong className="text-foreground">Innovation:</strong> Blending wisdom with practice</li>
+                <li><strong className="text-foreground">Community:</strong> Growing together</li>
+              </ul>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="transition-all hover:shadow-glow hover:border-primary md:col-span-1 lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Meet the Founder</CardTitle>
+        {/* Founder Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Meet the Founder</CardTitle>
             <p className="text-primary">Vinayak (CyberGupta)</p>
-            <p className="text-sm text-muted-foreground">Penetration Tester, Ethical Hacker, and Cybersecurity Enthusiast</p>
-          </CardHeader>
-          <CardContent>
-            <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
-              "I started SutraByte to break down barriers in cybersecurity education. My mission is to inspire, guide, and empower the next generation of cyber defenders—making security a habit, not just a skill."
-            </blockquote>
-          </CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Penetration Tester & Ethical Hacker</p>
+            <CardContent>
+              <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
+                "I started SutraByte to break down barriers in cybersecurity education. My mission is to inspire, guide, and empower the next generation of cyber defenders—making security a habit, not just a skill."
+              </blockquote>
+            </CardContent>
+          </div>
         </Card>
 
-        <Card className="transition-all hover:shadow-glow hover:border-primary md:col-span-1 lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Meet the Co-Founder</CardTitle>
+        {/* Co-Founder Card */}
+        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+          <div>
+            <CardTitle className="text-2xl mb-4">Meet the Co-Founder</CardTitle>
             <p className="text-primary">Anushika Dutta</p>
-            <p className="text-sm text-muted-foreground">Cybersecurity Enthusiast & Creative Innovator</p>
-          </CardHeader>
-          <CardContent>
-            <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
-              "I helped start SutraByte because I believe learning cybersecurity should feel exciting, not intimidating. For me, it’s about sparking curiosity, encouraging creative problem‑solving, and helping people see that security isn’t just a skill — it’s a way of thinking that can change the digital world for the better."
-            </blockquote>
-          </CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Cybersecurity Enthusiast</p>
+            <CardContent>
+              <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
+                "I helped start SutraByte because I believe learning cybersecurity should feel exciting, not intimidating. For me, it’s about sparking curiosity, encouraging creative problem‑solving, and helping people see that security isn’t just a skill — it’s a way of thinking that can change the digital world for the better."
+              </blockquote>
+            </CardContent>
+          </div>
         </Card>
-
       </div>
 
        <div className="mt-16 text-center">
