@@ -15,9 +15,9 @@ export default function AboutPage() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-16">
         {/* Why SutraByte Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Why SutraByte?</CardTitle>
             <CardContent>
@@ -32,7 +32,7 @@ export default function AboutPage() {
         </Card>
 
         {/* Mission Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Our Mission</CardTitle>
             <CardContent>
@@ -44,7 +44,7 @@ export default function AboutPage() {
         </Card>
 
         {/* Vision Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Our Vision</CardTitle>
             <CardContent>
@@ -56,7 +56,7 @@ export default function AboutPage() {
         </Card>
 
         {/* Values Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Our Values</CardTitle>
             <CardContent>
@@ -71,7 +71,7 @@ export default function AboutPage() {
         </Card>
 
         {/* Founder Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Meet the Founder</CardTitle>
             <p className="text-primary">Vinayak (CyberGupta)</p>
@@ -85,7 +85,7 @@ export default function AboutPage() {
         </Card>
 
         {/* Co-Founder Card */}
-        <Card className="flex flex-col h-[320px] p-6 transition-all hover:shadow-glow hover:border-primary">
+        <Card className="flex flex-col p-6 transition-all hover:shadow-glow hover:border-primary">
           <div>
             <CardTitle className="text-2xl mb-4">Meet the Co-Founder</CardTitle>
             <p className="text-primary">Anushika Dutta</p>
@@ -99,7 +99,7 @@ export default function AboutPage() {
         </Card>
       </div>
 
-       <div className="mt-16 text-center">
+       <div className="mt-20 text-center">
         <h3 className="text-2xl font-bold tracking-tighter mb-4">Have Questions?</h3>
          <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mb-6">
             We'd love to hear from you. Whether you have a question about our resources, feedback, or anything else, our team is ready to answer all your questions.
