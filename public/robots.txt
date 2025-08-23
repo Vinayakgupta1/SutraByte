@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /learning-series
+Allow: /blog
+Allow: /resources
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*?*
+Disallow: /*/preview
+
+# Block specific bots known for aggressive crawling
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+# Crawl delay to prevent server overload
+Crawl-delay: 10
+
+# Sitemaps
+Sitemap: https://sutrabyte.com/sitemap.xml
