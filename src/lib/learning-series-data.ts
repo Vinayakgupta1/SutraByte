@@ -295,7 +295,7 @@ export const learningSeriesModules: LearningModule[] = [
     day: 29,
     title: 'Email Security & Phishing',
     description: 'Create a phishing awareness plan',
-    completed: true
+    completed: true,
     locked: false,
     slug: 'email-security-and-phishing',
     blogUrl: 'https://medium.com/@vinayak15/%EF%B8%8F-45-days-of-cybersecurity-day-29-email-security-phishing-601227f35f1b',
