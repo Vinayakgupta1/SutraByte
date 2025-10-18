@@ -1,6 +1,6 @@
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { BookOpen, Terminal, BookMarked } from "lucide-react";
+import { BookOpen, Terminal, BookMarked, Route } from "lucide-react";
 
 export default function ResourcesPage() {
   return (
@@ -12,7 +12,7 @@ export default function ResourcesPage() {
         </p>
       </div>
 
-       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto">
+       <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 mb-12 max-w-6xl mx-auto">
         <Link href="/learning-series">
           <Card className="h-full flex flex-col justify-center items-center text-center p-8 transition-all hover:shadow-glow hover:border-primary hover:-translate-y-1">
             <BookOpen className="h-12 w-12 text-primary mb-4" />
@@ -28,10 +28,17 @@ export default function ResourcesPage() {
           </Card>
         </Link>
          <Link href="/books">
-          <Card className="h-full flex flex-col justify-center items-center text-center p-8 transition-all hover:shadow-glow hover:border-primary hover:-translate-y-1 md:col-span-2 lg:col-span-1">
+          <Card className="h-full flex flex-col justify-center items-center text-center p-8 transition-all hover:shadow-glow hover:border-primary hover:-translate-y-1">
             <BookMarked className="h-12 w-12 text-primary mb-4" />
             <CardTitle className="text-2xl">Books</CardTitle>
             <CardDescription>A curated collection of essential cybersecurity books and reading materials.</CardDescription>
+          </Card>
+        </Link>
+        <Link href="/roadmaps">
+          <Card className="h-full flex flex-col justify-center items-center text-center p-8 transition-all hover:shadow-glow hover:border-primary hover:-translate-y-1">
+            <Route className="h-12 w-12 text-primary mb-4" />
+            <CardTitle className="text-2xl">Roadmaps</CardTitle>
+            <CardDescription>Structured learning paths to guide your cybersecurity career journey.</CardDescription>
           </Card>
         </Link>
       </div>

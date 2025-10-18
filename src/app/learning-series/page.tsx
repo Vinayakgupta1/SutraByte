@@ -13,7 +13,7 @@ export default function LearningSeriesPage() {
   return (
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-24">
       <div className="text-center space-y-4 mb-12">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">45-Day Learning Series</h1>
+        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">45 Days Learning Series</h1>
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
           Your structured path to becoming a cybersecurity expert. Complete daily modules to build your knowledge from the ground up.
         </p>

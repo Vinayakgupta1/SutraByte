@@ -29,4 +29,12 @@ export const books: Book[] = [
     chapters: 32,
     summary: true,
   },
+  {
+    id: 3,
+    title: "A Smarter Way to Learn Python",
+    description: "Learn it faster. Remember it longer. A unique and effective way to learn Python, combining clear explanations with interactive online exercises. By Mark Myers.",
+    tags: ["Python", "Programming", "Beginner", "Learning"],
+    url: "a-smarter-way-to-learn-python",
+    type: 'pdf',
+  },
 ];

@@ -28,21 +28,21 @@ export default async function RootLayout({
       <head>
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="relative flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          <Toaster />
-        </ThemeProvider>
+            <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            >
+            <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">
+                {children}
+                </main>
+                <Footer />
+            </div>
+            <Toaster />
+            </ThemeProvider>
       </body>
     </html>
   );
