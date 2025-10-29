@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { ThemeProvider } from '@/components/common/ThemeProvider';
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,6 +27,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
+        <meta name="google-site-verification" content="sj0yOPAf8-SI2cN28NunsTEQEOcGsI9JwErpSRqOyaU" />
       </head>
       <body className="font-body antialiased">
             <ThemeProvider
@@ -43,6 +45,7 @@ export default async function RootLayout({
             </div>
             <Toaster />
             </ThemeProvider>
+            <Analytics />
       </body>
     </html>
   );
