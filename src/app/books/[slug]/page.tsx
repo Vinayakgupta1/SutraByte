@@ -11,7 +11,9 @@ import { ArrowRight } from 'lucide-react';
 type BookPageProps = {
   params: {
     slug: string;
-  };
+  } | Promise<{
+    slug: string;
+  }>;
 };
 
 async function getBookDetails(slug: string) {
@@ -31,7 +33,8 @@ export async function generateStaticParams() {
 }
 
 export default async function BookPage({ params }: BookPageProps) {
-  const data = await getBookDetails(params.slug);
+  const resolvedParams = await params;
+  const data = await getBookDetails(resolvedParams.slug);
 
   if (!data) {
     notFound();
@@ -47,10 +50,10 @@ export default async function BookPage({ params }: BookPageProps) {
 
   const chapterList = [];
   if (book.summary) {
-    chapterList.push({ title: 'Summary Chapter', url: `./${params.slug}/summary` });
+    chapterList.push({ title: 'Summary Chapter', url: `/books/${resolvedParams.slug}/summary` });
   }
   for (let i = 1; i <= (book.chapters || 0); i++) {
-    chapterList.push({ title: `Project Chapter ${i}`, url: `./${params.slug}/chapter-${i}` });
+    chapterList.push({ title: `Project Chapter ${i}`, url: `/books/${resolvedParams.slug}/chapter-${i}` });
   }
 
   return (

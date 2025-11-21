@@ -11,8 +11,9 @@ type PdfViewerPageProps = {
   };
 };
 
-export default function PdfViewerPage({ params }: PdfViewerPageProps) {
-  const roadmap = roadmaps.find((r) => r.url === params.slug && r.type === 'pdf');
+export default async function PdfViewerPage({ params }: PdfViewerPageProps) {
+  const { slug } = await params;
+  const roadmap = roadmaps.find((r) => r.url === slug && r.type === 'pdf');
 
   if (!roadmap) {
     notFound();

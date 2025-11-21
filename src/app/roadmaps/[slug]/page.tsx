@@ -43,7 +43,8 @@ export async function generateStaticParams() {
 }
 
 export default async function RoadmapPage({ params }: RoadmapPageProps) {
-  const data = await getRoadmapContent(params.slug);
+  const { slug } = await params;
+  const data = await getRoadmapContent(slug);
 
   if (!data) {
     notFound();

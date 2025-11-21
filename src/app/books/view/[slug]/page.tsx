@@ -11,8 +11,9 @@ type PdfViewerPageProps = {
   };
 };
 
-export default function PdfViewerPage({ params }: PdfViewerPageProps) {
-  const book = books.find((b) => b.url === params.slug && b.type === 'pdf');
+export default async function PdfViewerPage({ params }: PdfViewerPageProps) {
+  const { slug } = await params;
+  const book = books.find((b) => b.url === slug && b.type === 'pdf');
 
   if (!book) {
     notFound();

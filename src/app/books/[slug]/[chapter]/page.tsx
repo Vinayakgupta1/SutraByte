@@ -14,8 +14,30 @@ type ChapterPageProps = {
   params: {
     slug: string;
     chapter: string;
-  };
+  } | Promise<{
+    slug: string;
+    chapter: string;
+  }>;
 };
+
+export async function generateStaticParams() {
+  const paths: { slug: string; chapter: string }[] = [];
+
+  const multiChapterBooks = books.filter((book) => book.type === 'multichapter');
+
+  multiChapterBooks.forEach((book) => {
+    if (book.summary) {
+      paths.push({ slug: book.url, chapter: 'summary' });
+    }
+    if (book.chapters) {
+      for (let i = 1; i <= book.chapters; i++) {
+        paths.push({ slug: book.url, chapter: `chapter-${i}` });
+      }
+    }
+  });
+
+  return paths;
+}
 
 async function getChapterContent(slug: string, chapterSlug: string) {
   const book = books.find((b) => b.type === 'multichapter' && b.url === slug);
@@ -48,7 +70,8 @@ async function getChapterContent(slug: string, chapterSlug: string) {
 
 
 export default async function ChapterPage({ params }: ChapterPageProps) {
-  const data = await getChapterContent(params.slug, params.chapter);
+  const resolvedParams = await params;
+  const data = await getChapterContent(resolvedParams.slug, resolvedParams.chapter);
 
   if (!data) {
     notFound();

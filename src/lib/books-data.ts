@@ -37,4 +37,14 @@ export const books: Book[] = [
     url: "a-smarter-way-to-learn-python",
     type: 'pdf',
   },
+  {
+    id: 4,
+    title: "AI-Driven Cybersecurity: The Future of Digital Defense",
+    description: "A comprehensive guide to understanding and applying Artificial Intelligence in both offensive and defensive cybersecurity. This book covers everything from foundational concepts to practical, hands-on projects with modern tools.",
+    tags: ["AI", "Machine Learning", "Cybersecurity", "Deep Learning", "Threat Detection", "Automation"],
+    url: "ai-driven-cybersecurity",
+    type: 'multichapter',
+    chapters: 20,
+    summary: true,
+  },
 ];
